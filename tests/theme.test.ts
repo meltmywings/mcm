@@ -48,3 +48,4 @@ describe('Strict 6-color palette enforcement', () => {
     expect(violations).toEqual([]);
   });
 });
+
