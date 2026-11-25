@@ -615,6 +615,7 @@ h4 {
   line-height: 1.1;
   letter-spacing: 0.01em;
   color: var(--rose);
+  text-shadow: 0 1px 0 var(--blush), 0 0 14px var(--blush);
   margin: 0;
 }
 
@@ -647,6 +648,15 @@ p {
   justify-items: start;
   gap: 0.85rem;
   margin-block-end: clamp(2rem, 4vw, 3.25rem);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: radial-gradient(
+    ellipse at left center,
+    color-mix(in srgb, var(--blush) 82%, transparent) 0%,
+    color-mix(in srgb, var(--blush) 52%, transparent) 65%,
+    transparent 100%
+  );
+  backdrop-filter: blur(4px);
 }
 
 .section-title {
@@ -657,10 +667,11 @@ p {
   max-inline-size: 56ch;
   color: var(--rose);
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: 0 1px 0 var(--blush), 0 0 10px var(--blush);
 }
 
-/* Buttons */
+/* Buttons — Opaque backgrounds */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -692,7 +703,7 @@ p {
 }
 
 .btn-secondary {
-  background-color: transparent;
+  background-color: var(--blush);
   color: var(--rose);
   border-color: var(--rose);
 }
@@ -749,6 +760,7 @@ p {
   font-size: clamp(0.68rem, 2.5vw, 1.0625rem);
   letter-spacing: clamp(0.02em, 0.18vw, 0.1em);
   color: var(--rose);
+  text-shadow: 0 1px 0 var(--blush), 0 0 12px var(--blush);
   text-decoration: none;
   min-block-size: 44px;
   min-width: 0;
@@ -774,7 +786,7 @@ p {
   padding-inline: 0.875rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--rose);
-  background: transparent;
+  background: var(--blush);
   color: var(--rose);
   font: inherit;
   font-size: 0.9375rem;
@@ -898,6 +910,22 @@ p {
   translate: 0 0;
 }
 
+.site-header.is-wide .site-menu a {
+  background-color: var(--blush);
+  border: 1.5px solid var(--rose);
+  border-radius: var(--radius-pill);
+  padding-inline: 1rem;
+}
+
+.site-header.is-wide .site-menu a:hover {
+  background-color: var(--butter);
+}
+
+.site-header.is-wide .site-menu .nav-cta {
+  background-color: var(--rose);
+  color: var(--blush);
+}
+
 .site-header.is-wide .site-menu::backdrop {
   display: none;
 }
@@ -924,18 +952,26 @@ p {
   justify-items: center;
   text-align: center;
   gap: 0.65rem;
-  padding: clamp(1rem, 2.5vw, 1.75rem);
-  background-color: transparent;
+  padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--blush) 82%, transparent) 0%,
+    color-mix(in srgb, var(--blush) 52%, transparent) 58%,
+    transparent 100%
+  );
+  backdrop-filter: blur(3px);
+  border-radius: var(--radius-lg);
   max-inline-size: min(100%, 44rem);
 }
 
 .hero-brand-title {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 4.4vw, 3.6rem);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.14em;
   line-height: 1.1;
   color: var(--rose);
+  text-shadow: 0 2px 0 var(--blush), 0 0 18px var(--blush);
 }
 
 .hero-brand-subtitle {
@@ -944,6 +980,7 @@ p {
   font-weight: 700;
   letter-spacing: 0.24em;
   color: var(--rose);
+  text-shadow: 0 1px 0 var(--blush), 0 0 12px var(--blush);
 }
 
 .hero-actions {
@@ -971,7 +1008,8 @@ p {
 }
 
 .metrics-grid li {
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 62%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   padding: 0.85rem 1rem;
@@ -1149,13 +1187,17 @@ p {
   padding-inline: 1.125rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--rose);
-  background: transparent;
+  background: var(--blush);
   color: var(--rose);
   font: inherit;
   font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-btn:hover {
+  background: var(--cream);
 }
 
 .filter-btn[aria-pressed='true'] {
@@ -1178,7 +1220,8 @@ p {
   flex-direction: column;
   justify-content: space-between;
   gap: 1.25rem;
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 62%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 3vw, 2rem);
@@ -1218,7 +1261,7 @@ p {
 
 .case-summary {
   color: var(--rose);
-  font-weight: 500;
+  font-weight: 600;
   margin-block-start: 0.5rem;
 }
 
@@ -1252,7 +1295,8 @@ p {
 }
 
 .service-card {
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 62%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   padding: 1.75rem;
@@ -1280,7 +1324,7 @@ p {
 .service-desc {
   color: var(--rose);
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .service-outcomes {
@@ -1310,7 +1354,8 @@ p {
 }
 
 .process-card {
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 62%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   padding: 1.75rem;
@@ -1327,14 +1372,15 @@ p {
 
 .process-card p {
   color: var(--rose);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .quote-block {
   margin: 3rem 0 0;
   padding: clamp(1.75rem, 4vw, 2.75rem);
   border-radius: var(--radius-lg);
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 65%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   display: grid;
   gap: 1rem;
@@ -1364,7 +1410,8 @@ p {
 }
 
 .faq-item {
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 62%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -1379,7 +1426,7 @@ p {
   min-block-size: 56px;
   padding: 1.125rem 1.5rem;
   border: 0;
-  background: transparent;
+  background: var(--blush);
   color: var(--rose);
   font: inherit;
   font-weight: 700;
@@ -1389,6 +1436,10 @@ p {
   justify-content: space-between;
   gap: 1rem;
   cursor: pointer;
+}
+
+.faq-trigger:hover {
+  background: var(--cream);
 }
 
 .faq-icon {
@@ -1412,9 +1463,9 @@ p {
 }
 
 .faq-panel {
-  padding: 0 1.5rem 1.375rem;
+  padding: 0.75rem 1.5rem 1.375rem;
   color: var(--rose);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* ==========================================================================
@@ -1434,7 +1485,8 @@ p {
 }
 
 .brief-form {
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 65%, transparent);
+  backdrop-filter: blur(5px);
   border: 2px solid var(--rose);
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 3.5vw, 2.5rem);
@@ -1637,7 +1689,8 @@ dialog.case-dialog::backdrop {
 
 /* Footer */
 .site-footer {
-  background: transparent;
+  background: color-mix(in srgb, var(--blush) 65%, transparent);
+  backdrop-filter: blur(5px);
   color: var(--rose);
   border-block-start: 2px solid var(--rose);
   padding-block: 3.5rem 2.5rem;
