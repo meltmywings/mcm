@@ -766,6 +766,15 @@ p {
   min-width: 0;
 }
 
+.site-header .site-logo {
+  background: color-mix(in srgb, var(--blush) 65%, transparent);
+  backdrop-filter: blur(5px);
+  border: 1.5px solid var(--rose);
+  border-radius: var(--radius-pill);
+  padding-inline: clamp(0.55rem, 1.5vw, 0.95rem);
+  padding-block: 0.25rem;
+}
+
 .brand-monogram {
   flex-shrink: 0;
   inline-size: clamp(1.85rem, 5vw, 2.5rem);
