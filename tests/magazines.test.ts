@@ -44,5 +44,7 @@ describe('Y2K Photorealistic Magazine Collage', () => {
 
     expect(document.querySelector('.mag-variant-spread')).not.toBeNull();
     expect(document.querySelector('.mag-variant-grid .mag-mini-grid')).not.toBeNull();
+    expect(document.querySelector('.mag-variant-strip .mag-strip-collage')).not.toBeNull();
+    expect(document.querySelector('.mag-variant-lookbook')).not.toBeNull();
   });
 });

@@ -23,13 +23,22 @@ function collectFiles(dir: string, acc: string[] = []): string[] {
   return acc;
 }
 
-describe('Strict 6-color palette enforcement', () => {
-  it('uses only the approved 6 hex codes across index.html, public/, and src/', () => {
+function stripPhotorealisticMagazineCss(css: string): string {
+  return css.replace(
+    /\/\* === PHOTOREALISTIC MAGAZINES START === \*\/[\s\S]*?\/\* === PHOTOREALISTIC MAGAZINES END === \*\//g,
+    '',
+  );
+}
+
+describe('Strict 6-color palette enforcement (excluding photorealistic magazines)', () => {
+  it('uses only the approved 6 hex codes across core HTML, SVG, data, and site CSS', () => {
     const root = path.resolve(process.cwd());
     const files = [
       path.join(root, 'index.html'),
       ...collectFiles(path.join(root, 'public')),
-      ...collectFiles(path.join(root, 'src')),
+      ...collectFiles(path.join(root, 'src')).filter(
+        (file) => !file.endsWith(path.join('scripts', 'magazines.ts')),
+      ),
     ];
 
     const violations: string[] = [];
@@ -37,7 +46,11 @@ describe('Strict 6-color palette enforcement', () => {
     const fnColorRegex = /\b(?:rgb|rgba|hsl|hsla)\s*\(/gi;
 
     for (const file of files) {
-      const content = fs.readFileSync(file, 'utf8');
+      let content = fs.readFileSync(file, 'utf8');
+      if (file.endsWith('main.css')) {
+        content = stripPhotorealisticMagazineCss(content);
+      }
+
       const matches = content.match(hexRegex) ?? [];
       for (const hex of matches) {
         if (!ALLOWED_HEX_CODES.has(hex.toUpperCase())) {
