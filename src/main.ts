@@ -1,6 +1,7 @@
 import { AGENCY_METRICS, PROCESS_STEPS, SERVICE_PILLARS } from './data/agency';
 import { initFaq } from './scripts/faq';
 import { initBriefForm } from './scripts/form';
+import { initMagazineCollage } from './scripts/magazines';
 import { initScrollRevealFallback, initTickerToggle, renderTicker } from './scripts/motion';
 import { ensurePopoverPolyfill, initNavbar } from './scripts/navbar';
 import { initWorkSection } from './scripts/work';
@@ -61,6 +62,7 @@ export async function bootstrapApp(root: ParentNode = document): Promise<void> {
   await ensurePopoverPolyfill();
 
   renderStaticSections(root);
+  initMagazineCollage(root);
   renderTicker(root.querySelector('#ticker-track'));
   initTickerToggle(
     root.querySelector<HTMLButtonElement>('#ticker-toggle'),

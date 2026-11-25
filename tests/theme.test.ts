@@ -34,6 +34,7 @@ describe('Strict 6-color palette enforcement', () => {
 
     const violations: string[] = [];
     const hexRegex = /#[0-9a-fA-F]{3,8}\b/g;
+    const fnColorRegex = /\b(?:rgb|rgba|hsl|hsla)\s*\(/gi;
 
     for (const file of files) {
       const content = fs.readFileSync(file, 'utf8');
@@ -43,9 +44,11 @@ describe('Strict 6-color palette enforcement', () => {
           violations.push(`${path.relative(root, file)}: ${hex}`);
         }
       }
+      if (fnColorRegex.test(content)) {
+        violations.push(`${path.relative(root, file)}: functional color rgb/hsl found`);
+      }
     }
 
     expect(violations).toEqual([]);
   });
 });
-
