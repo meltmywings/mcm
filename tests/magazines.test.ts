@@ -5,12 +5,12 @@ import {
   PERIMETER_MAGAZINES,
 } from '../src/scripts/magazines';
 
-describe('Y2K Magazine collage', () => {
+describe('Y2K Photorealistic Magazine Collage', () => {
   afterEach(() => {
     document.body.innerHTML = '';
   });
 
-  it('mounts decorative perimeter and hero-corner magazines with aria-hidden="true"', () => {
+  it('mounts decorative perimeter and hero collage magazines with aria-hidden="true"', () => {
     document.body.innerHTML = `
       <div id="magazine-collage"></div>
       <div id="hero-magazines"></div>
@@ -27,16 +27,22 @@ describe('Y2K Magazine collage', () => {
     expect(heroMags.querySelectorAll('.mag-cover')).toHaveLength(HERO_CORNER_MAGAZINES.length);
   });
 
-  it('includes masthead, artwork, and barcode details on every cover', () => {
-    document.body.innerHTML = '<div id="magazine-collage"></div>';
+  it('uses photorealistic img tags with empty alt text and valid local /magazines/ paths', () => {
+    document.body.innerHTML = `
+      <div id="magazine-collage"></div>
+      <div id="hero-magazines"></div>
+    `;
     initMagazineCollage(document);
 
-    const covers = document.querySelectorAll('#magazine-collage .mag-cover');
-    covers.forEach((cover) => {
-      expect(cover.querySelector('.mag-masthead')?.textContent?.trim().length).toBeGreaterThan(0);
-      expect(cover.querySelector('svg.mag-art')).not.toBeNull();
-      expect(cover.querySelector('.mag-barcode')).not.toBeNull();
+    const imgs = document.querySelectorAll<HTMLImageElement>('.mag-cover img.mag-photo');
+    expect(imgs.length).toBeGreaterThanOrEqual(PERIMETER_MAGAZINES.length + HERO_CORNER_MAGAZINES.length);
+
+    imgs.forEach((img) => {
+      expect(img.getAttribute('alt')).toBe('');
+      expect(img.getAttribute('src')).toMatch(/^\/magazines\/mag-\d{2}\.jpg$/);
     });
+
+    expect(document.querySelector('.mag-variant-spread')).not.toBeNull();
+    expect(document.querySelector('.mag-variant-grid .mag-mini-grid')).not.toBeNull();
   });
 });
-
