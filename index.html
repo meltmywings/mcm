@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Main Character Media | Social-First Creative &amp; Creator Agency</title>
+    <meta
+      name="description"
+      content="Main Character Media is a social-first creative studio turning ambitious brands into cultural protagonists across TikTok, Reels, creator ecosystems, and paid social."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <header class="site-header" id="site-header">
+      <a href="#main-heading" class="skip-link visually-hidden">Skip to main content</a>
+      <div class="header-inner">
+        <a class="site-logo" href="#top" aria-current="page">
+          <span class="logo-dot" aria-hidden="true"></span>
+          <span>MAIN CHARACTER MEDIA</span>
+        </a>
+
+        <nav class="site-nav" aria-label="Primary">
+          <button
+            class="menu-button"
+            type="button"
+            popovertarget="site-menu"
+            popovertargetaction="toggle"
+            aria-controls="site-menu"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true">
+              <line x1="3" y1="7" x2="21" y2="7" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="17" x2="21" y2="17" />
+            </svg>
+            <span>Menu</span>
+          </button>
+
+          <ul id="site-menu" class="site-menu" popover="auto">
+            <li><a href="#work">Work</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#culture-lab">Culture Lab</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#brief" class="nav-cta">Start a Brief</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <p class="eyebrow">Social-First Creative Studio</p>
+            <h1 id="main-heading" class="hero-title" tabindex="-1">
+              Make your brand the <em>main character.</em>
+            </h1>
+            <p class="hero-lead">
+              We build episodic short-form worlds, creator seeding engines, and high-velocity paid social
+              creative that turn passive feeds into loyal cultural fandoms.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#brief">Launch a Campaign</a>
+              <a class="btn btn-secondary" href="#work">Explore Case Studies</a>
+            </div>
+          </div>
+
+          <aside class="hero-card" aria-label="Agency impact metrics">
+            <p class="hero-card-eyebrow">Verified Cultural Traction</p>
+            <ul class="metrics-grid" id="metrics-list"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <div class="ticker-band">
+        <div class="ticker-shell">
+          <div class="ticker-viewport">
+            <ul class="ticker-track" id="ticker-track" aria-label="Agency capabilities"></ul>
+          </div>
+          <button type="button" class="ticker-toggle" id="ticker-toggle">
+            Pause ticker
+          </button>
+        </div>
+      </div>
+
+      <section class="section" id="work" aria-labelledby="work-heading">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">Selected Work</p>
+            <h2 id="work-heading" class="section-title">Campaigns that hijacked the feed.</h2>
+            <p class="section-subtitle">
+              Filter by channel discipline or inspect the full strategy behind each launch.
+            </p>
+          </div>
+
+          <div class="filter-bar" role="group" aria-label="Filter case studies by channel">
+            <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">All Work</button>
+            <button type="button" class="filter-btn" data-filter="short-form" aria-pressed="false">TikTok &amp; Reels</button>
+            <button type="button" class="filter-btn" data-filter="creators" aria-pressed="false">Creator Ecosystems</button>
+            <button type="button" class="filter-btn" data-filter="paid-social" aria-pressed="false">Paid Social</button>
+          </div>
+
+          <p id="work-count" class="visually-hidden" aria-live="polite">Showing 4 case studies</p>
+
+          <ul class="work-grid" id="work-grid"></ul>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="services" aria-labelledby="services-heading">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">Capabilities</p>
+            <h2 id="services-heading" class="section-title">Built for the feed, not a storyboard deck.</h2>
+            <p class="section-subtitle">
+              Every discipline inside Main Character Media is structured around speed, taste, and measurable conversion.
+            </p>
+          </div>
+
+          <ul class="services-grid" id="services-grid"></ul>
+        </div>
+      </section>
+
+      <section class="section section-dark" id="culture-lab" aria-labelledby="culture-heading">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">Culture Lab</p>
+            <h2 id="culture-heading" class="section-title">How we turn attention into equity.</h2>
+            <p class="section-subtitle">
+              Our three-part operating cadence blends editorial instinct with weekly retention telemetry.
+            </p>
+          </div>
+
+          <ol class="process-grid" id="process-grid"></ol>
+
+          <figure class="quote-block">
+            <blockquote class="quote-text">
+              “Main Character Media gave us a voice people actively waited for in their feeds. Within six weeks,
+              our waitlist grew by 38,000 and paid acquisition costs dropped by 41%.”
+            </blockquote>
+            <figcaption class="quote-cite">
+              Maya Lin-Vargas — VP of Brand, Solstice &amp; Nocturne Group
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" id="faq" aria-labelledby="faq-heading">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">FAQ</p>
+            <h2 id="faq-heading" class="section-title">Working with the studio.</h2>
+            <p class="section-subtitle">
+              Answers to the most common questions on timelines, retainers, and creative production.
+            </p>
+          </div>
+
+          <div class="faq-list" id="faq-list"></div>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="brief" aria-labelledby="brief-heading">
+        <div class="container brief-layout">
+          <div>
+            <p class="eyebrow">Start a Project</p>
+            <h2 id="brief-heading" class="section-title">Put your brand in the spotlight.</h2>
+            <p class="section-subtitle" style="margin-block-start: 1rem;">
+              Tell us what you are launching, which channels matter most, and where you want to take market share.
+              Our executive producers respond within one business day.
+            </p>
+          </div>
+
+          <div>
+            <div id="brief-status" class="brief-status" role="status" hidden>
+              <h3 id="brief-status-heading">Campaign brief received.</h3>
+              <p id="brief-status-copy"></p>
+              <div>
+                <button type="button" class="btn btn-secondary" id="brief-reset-btn">Send another brief</button>
+              </div>
+            </div>
+
+            <form id="brief-form" class="brief-form" action="#brief" method="POST" novalidate aria-labelledby="brief-heading">
+              <div class="field">
+                <label for="full-name">Full name <span aria-hidden="true">*</span></label>
+                <input
+                  type="text"
+                  id="full-name"
+                  name="fullName"
+                  autocomplete="name"
+                  required
+                  minlength="2"
+                  enterkeyhint="next"
+                  data-error="full-name-error"
+                />
+                <span id="full-name-error" class="error-msg">
+                  <span role="img" aria-label="Error">⚠</span> Enter your full name (at least 2 characters).
+                </span>
+              </div>
+
+              <div class="field">
+                <label for="work-email">Work email <span aria-hidden="true">*</span></label>
+                <span id="email-hint" class="hint">Format: you@company.com</span>
+                <input
+                  type="email"
+                  id="work-email"
+                  name="email"
+                  autocomplete="email"
+                  autocorrect="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  required
+                  enterkeyhint="next"
+                  aria-describedby="email-hint"
+                  data-error="email-error"
+                />
+                <span id="email-error" class="error-msg">
+                  <span role="img" aria-label="Error">⚠</span> Enter a valid work email address in the format you@company.com.
+                </span>
+              </div>
+
+              <div class="field">
+                <label for="brand-name">Brand or social handle <span aria-hidden="true">*</span></label>
+                <input
+                  type="text"
+                  id="brand-name"
+                  name="brand"
+                  autocomplete="organization"
+                  required
+                  enterkeyhint="next"
+                  data-error="brand-error"
+                />
+                <span id="brand-error" class="error-msg">
+                  <span role="img" aria-label="Error">⚠</span> Enter your brand name or primary social handle.
+                </span>
+              </div>
+
+              <fieldset class="choice-fieldset">
+                <legend>Estimated engagement scope</legend>
+                <div class="choice-grid" id="budget-options"></div>
+              </fieldset>
+
+              <fieldset class="choice-fieldset">
+                <legend>Priority channels</legend>
+                <div class="choice-grid" id="channel-options"></div>
+              </fieldset>
+
+              <div class="field">
+                <label for="project-notes">Campaign goals &amp; launch window <span aria-hidden="true">*</span></label>
+                <span id="notes-hint" class="hint">Include target launch month and any hero products (minimum 20 characters).</span>
+                <textarea
+                  id="project-notes"
+                  name="notes"
+                  required
+                  minlength="20"
+                  aria-describedby="notes-hint"
+                  data-error="notes-error"
+                ></textarea>
+                <span id="notes-error" class="error-msg">
+                  <span role="img" aria-label="Error">⚠</span> Tell us a bit more about your campaign (at least 20 characters).
+                </span>
+              </div>
+
+              <div>
+                <button type="submit" class="btn btn-primary" id="brief-submit">
+                  Launch Your Brief
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div>
+            <p class="site-logo" style="color: var(--ink-on-dark);">
+              <span class="logo-dot" aria-hidden="true"></span>
+              <span>MAIN CHARACTER MEDIA</span>
+            </p>
+            <p style="color: var(--ink-on-dark-muted); margin-block-start: 0.75rem; max-inline-size: 32ch;">
+              Social-first creative studio crafting cultural protagonists across feeds everywhere.
+            </p>
+          </div>
+
+          <div>
+            <h2 class="footer-heading">Studios</h2>
+            <ul class="footer-list">
+              <li>New York — SoHo Production Loft</li>
+              <li>Los Angeles — Arts District Stage</li>
+              <li>London — Shoreditch Strategy Desk</li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 class="footer-heading">Connect</h2>
+            <ul class="footer-list">
+              <li><a href="mailto:hello@maincharactermedia.co">hello@maincharactermedia.co</a></li>
+              <li><a href="#work">Case Studies</a></li>
+              <li><a href="#services">Services</a></li>
+              <li><a href="#brief">New Business Brief</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>&copy; <span id="copyright-year">2026</span> Main Character Media LLC. All rights reserved.</p>
+          <p>Crafted for cultural velocity.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Native modal dialog (no role="dialog" or aria-modal per modern-web-guidance: dialog) -->
+    <dialog id="case-dialog" class="case-dialog" closedby="any" aria-labelledby="case-dialog-title">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow" id="case-dialog-channel"></p>
+          <h1 id="case-dialog-title" class="dialog-title" style="margin-block-start: 0.4rem;"></h1>
+        </div>
+        <form method="dialog">
+          <button type="submit" value="close" class="btn btn-secondary" autofocus aria-label="Close case study">
+            Close
+          </button>
+        </form>
+      </div>
+
+      <div class="dialog-body">
+        <div class="case-metrics" id="case-dialog-metrics"></div>
+
+        <div class="dialog-section">
+          <h2>The Challenge</h2>
+          <p id="case-dialog-challenge"></p>
+        </div>
+
+        <div class="dialog-section">
+          <h2>The Main Character Play</h2>
+          <p id="case-dialog-strategy"></p>
+        </div>
+
+        <div class="dialog-section">
+          <h2>Deliverables</h2>
+          <ul class="dialog-deliverables" id="case-dialog-deliverables"></ul>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <a href="#brief" class="btn btn-primary" id="case-dialog-cta">Build a Campaign Like This</a>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
