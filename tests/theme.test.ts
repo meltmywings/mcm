@@ -35,6 +35,7 @@ describe('Strict 6-color palette enforcement (excluding photorealistic magazines
     const root = path.resolve(process.cwd());
     const files = [
       path.join(root, 'index.html'),
+      path.join(root, 'admin.html'),
       ...collectFiles(path.join(root, 'public')),
       ...collectFiles(path.join(root, 'src')).filter(
         (file) => !file.endsWith(path.join('scripts', 'magazines.ts')),

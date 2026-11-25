@@ -286,6 +286,17 @@ export function initBriefForm(
     const payload = extractBriefPayload(form);
     onSubmit?.(payload);
 
+    if (typeof fetch === 'function') {
+      void fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {
+        // Keep confirmation UX resilient even in static/offline environments
+      });
+    }
+
     form.hidden = true;
     if (statusBox && statusCopy) {
       const channelText = payload.channels.length ? payload.channels.join(', ') : 'multi-channel';

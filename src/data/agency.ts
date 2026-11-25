@@ -1,20 +1,16 @@
-export type ChannelFilter = 'all' | 'short-form' | 'creators' | 'paid-social';
-
-export interface CaseStudy {
-  id: string;
-  client: string;
-  sector: string;
-  title: string;
-  channel: Exclude<ChannelFilter, 'all'>;
-  channelLabel: string;
-  headlineMetric: string;
-  secondaryMetric: string;
-  summary: string;
-  challenge: string;
-  strategy: string;
-  deliverables: string[];
-  accentColor: string;
-}
+import { DEFAULT_CMS_STATE } from '../../api/_lib/defaultState';
+export type {
+  CampaignEvent,
+  CampaignKind,
+  CaseStudy,
+  ChannelFilter,
+  ClientRecord,
+  ClientStatus,
+  CmsState,
+  SiteContent,
+  SubmissionRecord,
+  SubmissionStatus,
+} from '../types/cms';
 
 export interface ServicePillar {
   number: string;
@@ -58,96 +54,9 @@ export const TICKER_ITEMS = [
   'COMMUNITY ARCHITECTURE',
 ] as const;
 
-export const CASE_STUDIES: CaseStudy[] = [
-  {
-    id: 'vespera-botanicals',
-    client: 'Vespera Botanicals',
-    sector: 'Clean Skincare',
-    title: 'Turning a quiet shelfie serum into a 6-week sold-out ritual',
-    channel: 'short-form',
-    channelLabel: 'TikTok & Reels',
-    headlineMetric: '64M Organic Views',
-    secondaryMetric: '4.4x Launch ROAS',
-    summary:
-      'Episodic founder-POV storytelling and tactile ASMR texture drops that owned beauty TikTok in Q2.',
-    challenge:
-      'Vespera had strong clinical efficacy but zero cultural recognition among Gen-Z skincare buyers overwhelmed by clinical jargon.',
-    strategy:
-      'We built a 30-day "Nightstand Confessions" docu-series pairing macro texture shots with unscripted creator duets and comment-reply hooks.',
-    deliverables: [
-      '24 native short-form episodes',
-      'Creator duet & stitch prompt kit',
-      'Whitelisted Spark Ads creative matrix',
-    ],
-    accentColor: '#F4A6C1',
-  },
-  {
-    id: 'kinetix-audio',
-    client: 'Kinetix Audio',
-    sector: 'Consumer Hardware',
-    title: 'Mobilizing 85 underground DJs and runners for an open-ear drop',
-    channel: 'creators',
-    channelLabel: 'Creator Ecosystems',
-    headlineMetric: '85 Creator Drops',
-    secondaryMetric: '310% Earned Reach Lift',
-    summary:
-      'Street-cast micro-communities replaced polished tech reviews with raw city-run soundtracks and studio-session reels.',
-    challenge:
-      'Traditional tech YouTube sponsorships felt sterile and failed to communicate why runners and commuters would wear open-ear buds.',
-    strategy:
-      'We seeded custom serialized hardware kits to urban run clubs and bedroom producers, letting each creator score their own 45-second commute.',
-    deliverables: [
-      '85 seeded creator collaborations',
-      'Run-club pop-up capture units',
-      'Cross-platform sound-pack trend',
-    ],
-    accentColor: '#B9D7ED',
-  },
-  {
-    id: 'solstice-matcha',
-    client: 'Solstice Matcha',
-    sector: 'Modern Beverage',
-    title: 'Engineering high-velocity paid social creative that beat rising CPMs',
-    channel: 'paid-social',
-    channelLabel: 'Paid Social & Launch',
-    headlineMetric: '-41% Customer CPA',
-    secondaryMetric: '$1.9M Tracked Revenue',
-    summary:
-      'Weekly modular hook sprints turned organic comment debates into top-performing Meta and TikTok acquisition ads.',
-    challenge:
-      'Rising acquisition costs stalled Solstice at $40 CPA with static studio photography losing thumb-stop rate.',
-    strategy:
-      'Our creative lab ran 12 rapid hook variations per week—testing cold-brew pours, cafe taste tests, and split-screen myth-busting.',
-    deliverables: [
-      'Weekly modular ad-hook sprints',
-      'Creator UGC licensing pipeline',
-      'Full-funnel retention creative',
-    ],
-    accentColor: '#D9C5E9',
-  },
-  {
-    id: 'nocturne-denim',
-    client: 'Nocturne Denim',
-    sector: 'Contemporary Apparel',
-    title: 'Building a zero-ad-spend waitlist of 38,000 fans before drop one',
-    channel: 'creators',
-    channelLabel: 'Creator Ecosystems',
-    headlineMetric: '38K Waitlist Signups',
-    secondaryMetric: '92% Sell-Through in 4h',
-    summary:
-      'Behind-the-seams atelier dispatches and stylist fit-check chains made every garment feel collectible.',
-    challenge:
-      'Launching a heavyweight selvedge label without legacy retail distribution meant earning obsessive pre-launch demand on social.',
-    strategy:
-      'We serialized the pattern-making journey across Instagram Broadcast Channels, Reels, and stylist capsule lookbooks.',
-    deliverables: [
-      'Serialized atelier video diary',
-      'Stylist seeding & fit-check chain',
-      'Broadcast channel drop mechanics',
-    ],
-    accentColor: '#F8D98B',
-  },
-];
+export const DEFAULT_SITE_CONTENT = DEFAULT_CMS_STATE.siteContent;
+export const CASE_STUDIES = DEFAULT_CMS_STATE.caseStudies;
+export const DEFAULT_CAMPAIGNS = DEFAULT_CMS_STATE.campaigns;
 
 export const SERVICE_PILLARS: ServicePillar[] = [
   {
@@ -246,4 +155,3 @@ export const CHANNEL_OPTIONS = [
   { id: 'ch-creators', value: 'creators', label: 'Creator Seeding' },
   { id: 'ch-paid', value: 'paid', label: 'Paid Social' },
 ] as const;
-

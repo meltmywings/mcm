@@ -1,0 +1,336 @@
+/* ==========================================================================
+   Main Character Media Studio Portal — Strict 6-Color Y2K Editorial Theme
+   ========================================================================== */
+
+:root {
+  --rose: #F4A6C1;
+  --blush: #F8DCE8;
+  --cream: #E9D6C4;
+  --sky: #B9D7ED;
+  --lilac: #D9C5E9;
+  --butter: #F8D98B;
+
+  --font-display: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius-sm: 0.875rem;
+  --radius-md: 1.5rem;
+  --radius-lg: 2.25rem;
+  --radius-pill: 999px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  background-color: var(--blush);
+  color: var(--rose);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  margin: 0;
+  color: var(--rose);
+}
+
+.admin-header {
+  padding-block-start: env(safe-area-inset-top, 0px);
+  border-block-end: 2px solid var(--rose);
+  background-color: var(--blush);
+}
+
+.admin-header-inner {
+  width: 100%;
+  max-width: 74rem;
+  margin-inline: auto;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  color: var(--rose);
+}
+
+.admin-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.admin-main {
+  width: 100%;
+  max-width: 74rem;
+  margin-inline: auto;
+  padding: 1.5rem 1rem 3.5rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--rose);
+  background: var(--butter);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-block-size: 44px;
+  padding-inline: 1.25rem;
+  padding-block: 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--rose);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: var(--rose);
+  color: var(--blush);
+}
+
+.btn-primary:hover {
+  background-color: var(--butter);
+  color: var(--rose);
+}
+
+.btn-secondary {
+  background-color: var(--cream);
+  color: var(--rose);
+}
+
+.btn-secondary:hover {
+  background-color: var(--sky);
+}
+
+.admin-toast {
+  margin-block-end: 1.25rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--rose);
+  background-color: var(--butter);
+  font-weight: 700;
+}
+
+.admin-toast[hidden] {
+  display: none;
+}
+
+.auth-gate {
+  display: grid;
+  place-items: center;
+  min-block-size: 68dvh;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 30rem;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--rose);
+  background-color: var(--cream);
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-copy {
+  margin: 0;
+  font-weight: 600;
+}
+
+.auth-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-block-end: 1.5rem;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 44px;
+  padding-inline: 1.25rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--rose);
+  background-color: var(--blush);
+  color: var(--rose);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab-btn[aria-selected='true'] {
+  background-color: var(--rose);
+  color: var(--blush);
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.5rem;
+  padding-inline: 0.35rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--butter);
+  color: var(--rose);
+  font-size: 0.75rem;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.panel-card {
+  background-color: var(--cream);
+  border: 2px solid var(--rose);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  display: grid;
+  gap: 1.15rem;
+}
+
+.panel-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.form-grid-2 {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.field input,
+.field textarea,
+.select-input,
+.select-pill {
+  font: inherit;
+  font-size: max(1rem, 1em);
+  min-block-size: 44px;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--rose);
+  background-color: var(--blush);
+  color: var(--rose);
+  width: 100%;
+}
+
+.select-pill {
+  width: auto;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+.stack-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.item-card {
+  background-color: var(--blush);
+  border: 2px solid var(--rose);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.item-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.meta-pill {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--rose);
+  background-color: var(--butter);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.error-msg {
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--rose);
+  background-color: var(--butter);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.error-msg[hidden],
+.workspace[hidden],
+.auth-gate[hidden],
+.tab-panel[hidden],
+#logout-btn[hidden] {
+  display: none;
+}
+

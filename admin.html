@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F8DCE8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Studio Portal | Main Character Media</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/admin.css" />
+</head>
+
+<body>
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a href="/" class="admin-brand">
+        <svg width="36" height="30" viewBox="0 0 80 72" fill="none" aria-hidden="true">
+          <ellipse cx="40" cy="36" rx="35" ry="12" transform="rotate(-14 40 36)" stroke="#F8D98B" stroke-width="2.5" />
+          <text x="12" y="42" font-family="'Cormorant Garamond', Georgia, serif" font-size="34" font-weight="700" fill="#F4A6C1">M</text>
+          <text x="38" y="54" font-family="'Cormorant Garamond', Georgia, serif" font-size="34" font-weight="700" fill="#F4A6C1">C</text>
+          <path d="M56 26l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z" fill="#F8D98B" />
+        </svg>
+        <span>MCM STUDIO PORTAL</span>
+      </a>
+
+      <div class="admin-header-actions">
+        <a href="/" class="btn btn-secondary">View Main Site ↗</a>
+        <button type="button" id="logout-btn" class="btn btn-primary" hidden>Lock Studio</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <div id="admin-toast" class="admin-toast" role="status" aria-live="polite" hidden></div>
+
+    <!-- Password Gate -->
+    <section id="auth-gate" class="auth-gate" aria-labelledby="auth-heading">
+      <div class="auth-card">
+        <p class="eyebrow">Executive Access</p>
+        <h1 id="auth-heading">Main Character Studio</h1>
+        <p class="auth-copy">
+          Enter the studio passcode to edit live website copy and case studies, moderate clients,
+          review incoming briefs, and publish campaigns or events.
+        </p>
+
+        <form id="login-form" class="auth-form" novalidate>
+          <div class="field">
+            <label for="studio-passcode">Studio passcode</label>
+            <input
+              type="password"
+              id="studio-passcode"
+              name="passcode"
+              autocomplete="current-password"
+              required
+              data-error="passcode-error"
+            />
+            <span id="passcode-error" class="error-msg" hidden></span>
+          </div>
+          <button type="submit" id="login-submit" class="btn btn-primary">Unlock Studio Portal</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Authenticated Workspace -->
+    <section id="admin-workspace" class="workspace" hidden aria-label="Studio Management Workspace">
+      <nav class="tab-bar" aria-label="Studio sections">
+        <button type="button" class="tab-btn" data-tab="content" aria-selected="true">Site &amp; Case Studies</button>
+        <button type="button" class="tab-btn" data-tab="clients" aria-selected="false">Clients &amp; Moderation</button>
+        <button type="button" class="tab-btn" data-tab="inbox" aria-selected="false">
+          Messages &amp; Briefs <span id="inbox-badge" class="badge">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="campaigns" aria-selected="false">Campaigns &amp; Events</button>
+      </nav>
+
+      <!-- Tab 1: Content & Case Studies -->
+      <section class="tab-panel" data-panel="content">
+        <div class="panel-grid">
+          <form id="site-content-form" class="panel-card">
+            <div class="panel-card-head">
+              <h2>Main Website Copy</h2>
+              <button type="submit" class="btn btn-primary">Save Site Copy</button>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="field">
+                <label for="cms-brand-title">Hero Brand Title</label>
+                <input type="text" id="cms-brand-title" name="brandTitle" required />
+              </div>
+              <div class="field">
+                <label for="cms-brand-subtitle">Hero Subtitle</label>
+                <input type="text" id="cms-brand-subtitle" name="brandSubtitle" required />
+              </div>
+              <div class="field">
+                <label for="cms-primary-cta">Primary CTA Label</label>
+                <input type="text" id="cms-primary-cta" name="primaryCtaLabel" required />
+              </div>
+              <div class="field">
+                <label for="cms-secondary-cta">Secondary CTA Label</label>
+                <input type="text" id="cms-secondary-cta" name="secondaryCtaLabel" required />
+              </div>
+              <div class="field">
+                <label for="cms-work-heading">Work Section Heading</label>
+                <input type="text" id="cms-work-heading" name="workHeading" required />
+              </div>
+              <div class="field">
+                <label for="cms-services-heading">Capabilities Heading</label>
+                <input type="text" id="cms-services-heading" name="servicesHeading" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="cms-work-subtitle">Work Section Subtitle</label>
+              <input type="text" id="cms-work-subtitle" name="workSubtitle" required />
+            </div>
+
+            <div class="field">
+              <label for="cms-culture-quote">Culture Lab Quote</label>
+              <textarea id="cms-culture-quote" name="cultureQuote" rows="3" required></textarea>
+            </div>
+
+            <div class="field">
+              <label for="cms-culture-author">Quote Attribution</label>
+              <input type="text" id="cms-culture-author" name="cultureQuoteAuthor" required />
+            </div>
+          </form>
+
+          <div class="panel-card">
+            <div class="panel-card-head">
+              <h2>Case Studies Editor</h2>
+              <div class="inline-actions">
+                <button type="button" id="add-case-btn" class="btn btn-secondary">+ Add Case Study</button>
+                <button type="button" id="save-cases-btn" class="btn btn-primary">Publish Case Studies</button>
+              </div>
+            </div>
+            <div id="case-editor-list" class="stack-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Clients & Moderation -->
+      <section class="tab-panel" data-panel="clients" hidden>
+        <div class="panel-grid">
+          <form id="new-client-form" class="panel-card">
+            <div class="panel-card-head">
+              <h2>Add Tracked Client</h2>
+              <button type="submit" class="btn btn-primary">Add Client</button>
+            </div>
+            <div class="form-grid-2">
+              <div class="field">
+                <label for="client-name">Brand / Client Name</label>
+                <input type="text" id="client-name" name="name" required />
+              </div>
+              <div class="field">
+                <label for="client-handle">Social Handle</label>
+                <input type="text" id="client-handle" name="handle" placeholder="@brand" />
+              </div>
+              <div class="field">
+                <label for="client-email">Contact Email</label>
+                <input type="email" id="client-email" name="email" required />
+              </div>
+              <div class="field">
+                <label for="client-retainer">Retainer / Scope</label>
+                <input type="text" id="client-retainer" name="retainer" value="$25k–$50k / mo" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="client-notes">Moderation &amp; Production Notes</label>
+              <textarea id="client-notes" name="notes" rows="2"></textarea>
+            </div>
+          </form>
+
+          <div class="panel-card">
+            <div class="panel-card-head">
+              <h2>Client Roster &amp; Moderation</h2>
+              <select id="client-filter" aria-label="Filter clients by moderation status" class="select-pill">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending Review</option>
+                <option value="approved">Approved</option>
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="flagged">Flagged</option>
+              </select>
+            </div>
+            <div id="clients-list" class="stack-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Inbox (Messages & Applications) -->
+      <section class="tab-panel" data-panel="inbox" hidden>
+        <div class="panel-card">
+          <div class="panel-card-head">
+            <h2>Website Messages &amp; Campaign Applications</h2>
+            <select id="inbox-filter" aria-label="Filter inbox messages" class="select-pill">
+              <option value="all">All Messages</option>
+              <option value="new">New</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="approved">Approved</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div id="inbox-list" class="stack-list"></div>
+        </div>
+      </section>
+
+      <!-- Tab 4: Campaigns & Events -->
+      <section class="tab-panel" data-panel="campaigns" hidden>
+        <div class="panel-grid">
+          <form id="new-campaign-form" class="panel-card">
+            <div class="panel-card-head">
+              <h2>Launch Campaign or Event</h2>
+              <button type="submit" class="btn btn-primary">Publish to Main Site</button>
+            </div>
+            <div class="form-grid-2">
+              <div class="field">
+                <label for="camp-title">Campaign / Event Title</label>
+                <input type="text" id="camp-title" name="title" required />
+              </div>
+              <div class="field">
+                <label for="camp-kind">Type</label>
+                <select id="camp-kind" name="kind" class="select-input">
+                  <option value="Campaign">Campaign</option>
+                  <option value="Event">Event</option>
+                  <option value="Drop">Drop</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="camp-date">Date / Window</label>
+                <input type="text" id="camp-date" name="dateLabel" required placeholder="Dec 2026" />
+              </div>
+              <div class="field">
+                <label for="camp-location">Location / Channel</label>
+                <input type="text" id="camp-location" name="location" required placeholder="NYC · TikTok" />
+              </div>
+              <div class="field">
+                <label for="camp-cta">CTA Button Label</label>
+                <input type="text" id="camp-cta" name="ctaLabel" value="Apply Now" required />
+              </div>
+              <div class="field">
+                <label for="camp-href">CTA Target Link</label>
+                <input type="text" id="camp-href" name="ctaHref" value="#brief" required />
+              </div>
+            </div>
+            <div class="field">
+              <label for="camp-desc">Description</label>
+              <textarea id="camp-desc" name="description" rows="2" required></textarea>
+            </div>
+          </form>
+
+          <div class="panel-card">
+            <div class="panel-card-head">
+              <h2>Active &amp; Draft Campaigns</h2>
+            </div>
+            <div id="campaigns-list" class="stack-list"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="/src/admin.ts"></script>
+</body>
+
+</html>
+

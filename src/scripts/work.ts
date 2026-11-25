@@ -41,16 +41,26 @@ export function renderCaseStudies(grid: HTMLElement | null, studies: readonly Ca
   grid.replaceChildren(...cards);
 }
 
-export function initWorkSection(root: ParentNode = document): { applyFilter: (filter: ChannelFilter) => void } {
+export function initWorkSection(
+  root: ParentNode = document,
+  initialStudies: readonly CaseStudy[] = CASE_STUDIES,
+): {
+  applyFilter: (filter: ChannelFilter) => void;
+  updateStudies: (nextStudies: readonly CaseStudy[]) => void;
+} {
   const grid = root.querySelector<HTMLElement>('#work-grid');
   const countEl = root.querySelector<HTMLElement>('#work-count');
   const filterButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-filter]'));
   const dialog = root.querySelector<HTMLDialogElement>('#case-dialog');
 
-  renderCaseStudies(grid, CASE_STUDIES);
+  let activeStudies: CaseStudy[] = [...initialStudies];
+  let currentFilter: ChannelFilter = 'all';
+
+  renderCaseStudies(grid, activeStudies);
 
   const applyFilter = (filter: ChannelFilter) => {
-    const allowedIds = new Set(filterCaseStudies(CASE_STUDIES, filter).map((item) => item.id));
+    currentFilter = filter;
+    const allowedIds = new Set(filterCaseStudies(activeStudies, filter).map((item) => item.id));
     let visibleCount = 0;
 
     grid?.querySelectorAll<HTMLLIElement>('.case-card').forEach((card) => {
@@ -68,6 +78,12 @@ export function initWorkSection(root: ParentNode = document): { applyFilter: (fi
     }
   };
 
+  const updateStudies = (nextStudies: readonly CaseStudy[]) => {
+    activeStudies = [...nextStudies];
+    renderCaseStudies(grid, activeStudies);
+    applyFilter(currentFilter);
+  };
+
   filterButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const nextFilter = (btn.dataset.filter as ChannelFilter) || 'all';
@@ -76,10 +92,10 @@ export function initWorkSection(root: ParentNode = document): { applyFilter: (fi
   });
 
   if (dialog) {
-    setupCaseDialog(dialog, grid, root);
+    setupCaseDialog(dialog, grid, root, () => activeStudies);
   }
 
-  return { applyFilter };
+  return { applyFilter, updateStudies };
 }
 
 function populateDialog(dialog: HTMLDialogElement, study: CaseStudy): void {
@@ -117,11 +133,12 @@ export function setupCaseDialog(
   dialog: HTMLDialogElement,
   grid: HTMLElement | null,
   root: ParentNode = document,
+  getStudies: () => readonly CaseStudy[] = () => CASE_STUDIES,
 ): void {
   grid?.addEventListener('click', (event) => {
     const trigger = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('[data-open-case]');
     if (!trigger) return;
-    const study = CASE_STUDIES.find((item) => item.id === trigger.dataset.openCase);
+    const study = getStudies().find((item) => item.id === trigger.dataset.openCase);
     if (!study) return;
 
     populateDialog(dialog, study);
@@ -132,7 +149,6 @@ export function setupCaseDialog(
     }
   });
 
-  // Close when clicking the CTA to jump to the brief form
   const ctaLink = root.querySelector<HTMLAnchorElement>('#case-dialog-cta');
   ctaLink?.addEventListener('click', () => {
     if (typeof dialog.close === 'function' && dialog.open) {
@@ -142,12 +158,10 @@ export function setupCaseDialog(
     }
   });
 
-  // Reset returnValue on close so stale values never leak
   dialog.addEventListener('close', () => {
     dialog.returnValue = '';
   });
 
-  // Light-dismiss fallback for browsers without native dialog closedby="any"
   if (typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)) {
     const isOutside = (e: PointerEvent) => {
       const rect = dialog.getBoundingClientRect();
@@ -171,4 +185,3 @@ export function setupCaseDialog(
     });
   }
 }
-

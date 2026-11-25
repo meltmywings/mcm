@@ -7,7 +7,7 @@ function buildHeaderDom(): HTMLElement {
       <div class="header-inner">
         <a class="site-logo" href="#top" aria-current="page">MAIN CHARACTER MEDIA</a>
         <nav class="site-nav" aria-label="Primary">
-          <button class="menu-button" type="button" popovertarget="site-menu" popovertargetaction="toggle" aria-controls="site-menu">
+          <button class="menu-button" type="button" aria-controls="site-menu" aria-expanded="false">
             <span>Menu</span>
           </button>
           <ul id="site-menu" class="site-menu" popover="auto">
@@ -75,6 +75,44 @@ describe('Navbar controller', () => {
 
     expect(links[0].hasAttribute('aria-current')).toBe(false);
     expect(links[1].getAttribute('aria-current')).toBe('page');
+    ctrl?.destroy();
+  });
+
+  it('toggles menu open/closed via the Menu button in collapsed mode and closes on Escape or link click', () => {
+    const header = buildHeaderDom();
+    const inner = header.querySelector('.header-inner') as HTMLElement;
+    const menu = header.querySelector('#site-menu') as HTMLElement;
+    const menuBtn = header.querySelector('.menu-button') as HTMLButtonElement;
+    const link = header.querySelector('.site-menu a') as HTMLAnchorElement;
+
+    Object.defineProperty(inner, 'scrollWidth', { configurable: true, value: 900 });
+    Object.defineProperty(inner, 'clientWidth', { configurable: true, value: 390 });
+
+    const ctrl = initNavbar(header);
+    expect(header.classList.contains('is-wide')).toBe(false);
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false');
+    expect(menu.classList.contains('is-open')).toBe(false);
+
+    menuBtn.click();
+    expect(menu.classList.contains('is-open')).toBe(true);
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('true');
+
+    menuBtn.click();
+    expect(menu.classList.contains('is-open')).toBe(false);
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false');
+
+    menuBtn.click();
+    expect(menu.classList.contains('is-open')).toBe(true);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(menu.classList.contains('is-open')).toBe(false);
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false');
+
+    menuBtn.click();
+    expect(menu.classList.contains('is-open')).toBe(true);
+    link.click();
+    expect(menu.classList.contains('is-open')).toBe(false);
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false');
+
     ctrl?.destroy();
   });
 });

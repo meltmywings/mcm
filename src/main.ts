@@ -1,5 +1,15 @@
-import { AGENCY_METRICS, PROCESS_STEPS, SERVICE_PILLARS } from './data/agency';
+import {
+  AGENCY_METRICS,
+  CASE_STUDIES,
+  DEFAULT_CAMPAIGNS,
+  PROCESS_STEPS,
+  SERVICE_PILLARS,
+  type CampaignEvent,
+  type CaseStudy,
+  type SiteContent,
+} from './data/agency';
 import { initFaq } from './scripts/faq';
+import { applySiteContent, renderCampaigns } from './scripts/cmsView';
 import { initBriefForm } from './scripts/form';
 import { initMagazineCollage } from './scripts/magazines';
 import { initScrollRevealFallback, initTickerToggle, renderTicker } from './scripts/motion';
@@ -58,6 +68,32 @@ function renderStaticSections(root: ParentNode = document): void {
   }
 }
 
+async function hydrateFromCms(
+  root: ParentNode,
+  workController: { updateStudies: (studies: readonly CaseStudy[]) => void },
+): Promise<void> {
+  if (typeof fetch !== 'function') return;
+  try {
+    const res = await fetch('/api/cms', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      siteContent?: Partial<SiteContent>;
+      caseStudies?: CaseStudy[];
+      campaigns?: CampaignEvent[];
+    };
+
+    if (data.siteContent) applySiteContent(root, data.siteContent);
+    if (Array.isArray(data.caseStudies) && data.caseStudies.length > 0) {
+      workController.updateStudies(data.caseStudies);
+    }
+    if (Array.isArray(data.campaigns)) {
+      renderCampaigns(root.querySelector('#events-grid'), data.campaigns);
+    }
+  } catch {
+    // Keep default seeded content when running offline
+  }
+}
+
 export async function bootstrapApp(root: ParentNode = document): Promise<void> {
   await ensurePopoverPolyfill();
 
@@ -70,7 +106,8 @@ export async function bootstrapApp(root: ParentNode = document): Promise<void> {
   );
 
   initNavbar(root.querySelector<HTMLElement>('#site-header'));
-  initWorkSection(root);
+  const workController = initWorkSection(root, CASE_STUDIES);
+  renderCampaigns(root.querySelector('#events-grid'), DEFAULT_CAMPAIGNS);
   initFaq(root.querySelector<HTMLElement>('#faq-list'));
   initBriefForm(root);
   initScrollRevealFallback(root);
@@ -79,9 +116,10 @@ export async function bootstrapApp(root: ParentNode = document): Promise<void> {
   if (yearEl) {
     yearEl.textContent = String(new Date().getFullYear());
   }
+
+  void hydrateFromCms(root, workController);
 }
 
 if (typeof document !== 'undefined') {
   void bootstrapApp(document);
 }
-

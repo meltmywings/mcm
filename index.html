@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F8DCE8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Main Character Media | Creative Media Agency</title>
   <meta name="description"
     content="Main Character Media is a Y2K-inspired creative media agency turning ambitious brands into cultural icons across TikTok, Reels, creator ecosystems, and paid social." />
@@ -35,8 +38,7 @@
       </a>
 
       <nav class="site-nav" aria-label="Primary">
-        <button class="menu-button" type="button" popovertarget="site-menu" popovertargetaction="toggle"
-          aria-controls="site-menu">
+        <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-menu">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25"
             stroke-linecap="round" aria-hidden="true">
             <line x1="3" y1="7" x2="21" y2="7" />
@@ -48,9 +50,11 @@
 
         <ul id="site-menu" class="site-menu" popover="auto">
           <li><a href="#work">Work</a></li>
+          <li><a href="#events">Campaigns</a></li>
           <li><a href="#services">Services</a></li>
           <li><a href="#culture-lab">Culture Lab</a></li>
           <li><a href="#faq">FAQ</a></li>
+          <li><a href="/admin.html">Studio Portal</a></li>
           <li><a href="#brief" class="nav-cta">Start a Brief</a></li>
         </ul>
       </nav>
@@ -69,10 +73,10 @@
           </svg>
         </div>
         <h1 id="main-heading" class="hero-brand-title" tabindex="-1">MAIN CHARACTER MEDIA</h1>
-        <p class="hero-brand-subtitle">CREATIVE MEDIA AGENCY</p>
+        <p id="hero-brand-subtitle" class="hero-brand-subtitle">CREATIVE MEDIA AGENCY</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#brief">Launch a Campaign</a>
-          <a class="btn btn-secondary" href="#work">Explore Case Studies</a>
+          <a id="hero-primary-cta" class="btn btn-primary" href="#brief">Launch a Campaign</a>
+          <a id="hero-secondary-cta" class="btn btn-secondary" href="#work">Explore Case Studies</a>
         </div>
       </div>
     </section>
@@ -99,7 +103,7 @@
         <div class="section-header">
           <p class="eyebrow">Cover Stories</p>
           <h2 id="work-heading" class="section-title">Campaigns that hijacked the feed.</h2>
-          <p class="section-subtitle">
+          <p id="work-subtitle" class="section-subtitle">
             Filter by channel discipline or inspect the full editorial strategy behind each launch.
           </p>
         </div>
@@ -116,6 +120,20 @@
         <p id="work-count" class="visually-hidden" aria-live="polite">Showing 4 case studies</p>
 
         <ul class="work-grid" id="work-grid"></ul>
+      </div>
+    </section>
+
+    <section class="section" id="events" aria-labelledby="events-heading">
+      <div class="container">
+        <div class="section-header">
+          <p class="eyebrow">On Now</p>
+          <h2 id="events-heading" class="section-title">Live Campaigns &amp; Events.</h2>
+          <p class="section-subtitle">
+            Open creator castings, brand drops, and studio salons happening now.
+          </p>
+        </div>
+
+        <ul class="events-grid" id="events-grid"></ul>
       </div>
     </section>
 
@@ -147,11 +165,11 @@
             <ol class="process-grid" id="process-grid"></ol>
 
             <figure class="quote-block">
-              <blockquote class="quote-text">
+              <blockquote id="culture-quote-text" class="quote-text">
                 “Main Character Media gave us a voice people actively waited for in their feeds. Within six weeks,
                 our waitlist grew by 38,000 and paid acquisition costs dropped by 41%.”
               </blockquote>
-              <figcaption class="quote-cite">
+              <figcaption id="culture-quote-author" class="quote-cite">
                 Maya Lin-Vargas — VP of Brand, Solstice &amp; Nocturne Group
               </figcaption>
             </figure>
@@ -284,8 +302,10 @@
           <ul class="footer-list">
             <li><a href="mailto:hello@maincharactermedia.co">hello@maincharactermedia.co</a></li>
             <li><a href="#work">Case Studies</a></li>
+            <li><a href="#events">Campaigns &amp; Events</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#brief">New Business Brief</a></li>
+            <li><a href="/admin.html">Studio Portal</a></li>
           </ul>
         </div>
       </div>
