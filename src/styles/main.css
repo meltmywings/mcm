@@ -1,6 +1,6 @@
 /* ==========================================================================
    Main Character Media — Strict 6-Color Y2K Editorial Theme
-   Allowed palette ONLY:
+   Allowed palette ONLY (for site UI & chrome):
    #F4A6C1 (Rose Pink), #F8DCE8 (Blush Pink), #E9D6C4 (Champagne Cream),
    #B9D7ED (Powder Sky), #D9C5E9 (Pastel Lilac), #F8D98B (Buttercream Gold)
    ========================================================================== */
@@ -23,7 +23,7 @@
   --radius-pill: 999px;
 
   --max-width: 72rem;
-  --header-height: 5rem;
+  --header-height: 4.5rem;
 }
 
 *,
@@ -33,7 +33,11 @@
 }
 
 html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -44,19 +48,23 @@ html {
 
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  touch-action: pan-y;
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.65;
   color: var(--rose);
   background-color: var(--blush);
   -webkit-font-smoothing: antialiased;
-  overflow-x: clip;
 }
 
 main,
 .site-footer {
   position: relative;
   z-index: 10;
+  max-width: 100%;
 }
 
 /* Visually hidden utility */
@@ -93,33 +101,38 @@ main,
 }
 
 .container {
-  inline-size: min(100% - 2rem, var(--max-width));
+  width: 100%;
+  max-width: var(--max-width);
   margin-inline: auto;
+  padding-inline: 1rem;
   position: relative;
   z-index: 2;
 }
 
 /* === PHOTOREALISTIC MAGAZINES START === */
 /* ==========================================================================
-   Y2K Full-Color Photorealistic Magazine Collage (Exempt from 6-color rule)
+   Sitewide Crowded Photorealistic Magazine Background (Exempt from 6-color rule)
    ========================================================================== */
 
 .magazine-collage {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  z-index: 5;
+  z-index: 1;
   overflow: hidden;
+  contain: layout paint;
 }
 
 .mag-cover {
   position: absolute;
-  inline-size: clamp(12.5rem, 19vw, 20rem);
+  inline-size: clamp(13rem, 20vw, 21.5rem);
   aspect-ratio: 3 / 4;
   background-color: var(--mag-paper, #ffffff);
   border: 1px solid rgba(0, 0, 0, 0.18);
   box-shadow:
-    0 18px 42px rgba(18, 12, 16, 0.28),
+    0 18px 42px rgba(18, 12, 16, 0.3),
     0 4px 12px rgba(18, 12, 16, 0.18);
   overflow: hidden;
   user-select: none;
@@ -166,7 +179,7 @@ main,
     rgba(255, 255, 255, 0.14) 0%,
     rgba(0, 0, 0, 0) 28%,
     rgba(0, 0, 0, 0) 65%,
-    rgba(0, 0, 0, 0.42) 100%
+    rgba(0, 0, 0, 0.44) 100%
   );
 }
 
@@ -249,10 +262,10 @@ main,
   background-origin: content-box;
 }
 
-/* Open 2-page magazine spread (bottom center in reference) */
+/* Open 2-page magazine spread */
 .mag-variant-spread {
   aspect-ratio: 16 / 10.5;
-  inline-size: clamp(19rem, 33vw, 33rem);
+  inline-size: clamp(19rem, 34vw, 34rem);
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   background-color: #f5f2eb;
@@ -303,10 +316,10 @@ main,
   background-color: #d6d0c4;
 }
 
-/* Top-right 3x4 glossy cover grid (matches top-right of reference) */
+/* Top-right 3x4 glossy cover grid */
 .mag-variant-grid {
   aspect-ratio: 3 / 4.2;
-  inline-size: clamp(13rem, 20vw, 20.5rem);
+  inline-size: clamp(14rem, 22vw, 22rem);
   padding: 0.35rem;
   background-color: #ffffff;
 }
@@ -338,7 +351,7 @@ main,
 
 /* Upper-center fanned photo strip */
 .mag-variant-strip {
-  inline-size: clamp(14rem, 23vw, 22rem);
+  inline-size: clamp(15rem, 25vw, 24rem);
   aspect-ratio: 16 / 8.5;
   padding: 0.35rem;
   background-color: #f4f0ea;
@@ -359,7 +372,7 @@ main,
 
 /* Bottom-right lookbook layout */
 .mag-variant-lookbook {
-  inline-size: clamp(12.5rem, 18.5vw, 18.5rem);
+  inline-size: clamp(13rem, 19.5vw, 19.5rem);
   aspect-ratio: 3 / 4;
   background-color: #f9f6f1;
   padding: 0.6rem;
@@ -395,293 +408,199 @@ main,
   color: #3a3632;
 }
 
-/* Fixed perimeter placements framing the viewport edges during scroll */
-.mag-pos-tl {
-  inline-size: clamp(10.5rem, 14.5vw, 15.5rem);
-  inset-block-start: 4.5rem;
-  inset-inline-start: -6.5rem;
-  transform: rotate(-13deg);
-}
-
-.mag-pos-ml {
-  inline-size: clamp(10.5rem, 14.5vw, 15.5rem);
-  inset-block-start: 38%;
-  inset-inline-start: -7.5rem;
-  transform: rotate(9deg);
-}
-
-.mag-pos-bl {
-  inline-size: clamp(10.5rem, 14.5vw, 15.5rem);
-  inset-block-end: -2.5rem;
-  inset-inline-start: -6rem;
-  transform: rotate(-10deg);
-}
-
-.mag-pos-tr {
-  inline-size: clamp(10.5rem, 14.5vw, 15.5rem);
-  inset-block-start: 4.5rem;
-  inset-inline-end: -6.5rem;
-  transform: rotate(14deg);
-}
-
-.mag-pos-mr {
-  inline-size: clamp(10.5rem, 14.5vw, 15.5rem);
-  inset-block-start: 36%;
-  inset-inline-end: -7.5rem;
-  transform: rotate(-11deg);
-}
-
-.mag-pos-br {
-  inline-size: clamp(10.5rem, 14.5vw, 15.5rem);
-  inset-block-end: -2.5rem;
-  inset-inline-end: -6rem;
-  transform: rotate(12deg);
-}
-
-@media (min-width: 96rem) {
-  .mag-pos-tl {
-    inset-inline-start: -2.5rem;
-  }
-  .mag-pos-ml {
-    inset-inline-start: -3.25rem;
-  }
-  .mag-pos-bl {
-    inset-inline-start: -2.5rem;
-  }
-  .mag-pos-tr {
-    inset-inline-end: -2.5rem;
-  }
-  .mag-pos-mr {
-    inset-inline-end: -3.25rem;
-  }
-  .mag-pos-br {
-    inset-inline-end: -2.5rem;
-  }
-}
-
-/* Scroll-driven subtle drift for perimeter magazines */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: scroll()) {
-    @keyframes mag-drift-left {
-      from {
-        translate: 0 0;
-      }
-      to {
-        translate: 0 -2rem;
-      }
-    }
-    @keyframes mag-drift-right {
-      from {
-        translate: 0 0;
-      }
-      to {
-        translate: 0 2rem;
-      }
-    }
-
-    .mag-pos-tl,
-    .mag-pos-ml,
-    .mag-pos-bl {
-      animation: mag-drift-left linear both;
-      animation-timeline: scroll();
-    }
-
-    .mag-pos-tr,
-    .mag-pos-mr,
-    .mag-pos-br {
-      animation: mag-drift-right linear both;
-      animation-timeline: scroll();
-    }
-  }
-}
-
-/* Hero dense full-size magazine collage matching reference image proportions */
-.hero-magazines {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  overflow: hidden;
-}
-
-.hero-mag-tl-1 {
+/* Crowded sitewide perimeter placements */
+.bg-mag-tl-1 {
   inset-block-start: -1.5rem;
   inset-inline-start: -1.5rem;
   transform: rotate(6deg);
   z-index: 1;
 }
 
-.hero-mag-tl-2 {
-  inset-block-start: 1.5rem;
-  inset-inline-start: clamp(3rem, 5vw, 5.5rem);
+.bg-mag-tl-2 {
+  inset-block-start: 1.25rem;
+  inset-inline-start: clamp(3.5rem, 6vw, 6.5rem);
   transform: rotate(-16deg);
   z-index: 2;
 }
 
-.hero-mag-tl-3 {
+.bg-mag-tl-3 {
   inset-block-start: -1rem;
-  inset-inline-start: clamp(8rem, 13vw, 13.5rem);
+  inset-inline-start: clamp(9rem, 14vw, 15rem);
   transform: rotate(24deg);
   z-index: 3;
 }
 
-.hero-mag-tl-4 {
-  inset-block-start: 9.5rem;
-  inset-inline-start: clamp(4.5rem, 8vw, 8.5rem);
+.bg-mag-tl-4 {
+  inset-block-start: 8.5rem;
+  inset-inline-start: clamp(5rem, 9vw, 9.5rem);
   transform: rotate(18deg);
   z-index: 3;
 }
 
-.hero-mag-tl-main {
-  inline-size: clamp(13rem, 19.5vw, 20.5rem);
-  inset-block-start: clamp(8.5rem, 15vh, 13rem);
-  inset-inline-start: clamp(9.5rem, 17vw, 18.5rem);
+.bg-mag-tl-main {
+  inline-size: clamp(13.5rem, 21vw, 21.5rem);
+  inset-block-start: clamp(7rem, 14vh, 11.5rem);
+  inset-inline-start: clamp(10.5rem, 19vw, 20rem);
   transform: rotate(-1deg);
   z-index: 4;
 }
 
-.hero-mag-ml-teen {
-  inline-size: clamp(12.5rem, 18vw, 18.5rem);
-  inset-block-start: clamp(14rem, 25vh, 19rem);
+.bg-mag-ml-teen {
+  inline-size: clamp(13rem, 19vw, 19.5rem);
+  inset-block-start: clamp(14rem, 27vh, 19rem);
   inset-inline-start: -1.25rem;
   transform: rotate(-4deg);
   z-index: 3;
 }
 
-.hero-mag-bl-duo {
-  inline-size: clamp(13rem, 19vw, 19.5rem);
-  inset-block-end: clamp(12rem, 23vh, 17rem);
-  inset-inline-start: -1.75rem;
+.bg-mag-ml-extra {
+  inline-size: clamp(12rem, 17.5vw, 18rem);
+  inset-block-start: 48%;
+  inset-inline-start: clamp(4rem, 8vw, 8.5rem);
+  transform: rotate(11deg);
+  z-index: 2;
+}
+
+.bg-mag-bl-duo {
+  inline-size: clamp(13.5rem, 20vw, 20.5rem);
+  inset-block-end: clamp(12rem, 24vh, 17rem);
+  inset-inline-start: -1.5rem;
   transform: rotate(-18deg);
   z-index: 4;
 }
 
-.hero-mag-bl-style {
-  inline-size: clamp(12rem, 17vw, 17.5rem);
+.bg-mag-bl-style {
+  inline-size: clamp(12.5rem, 18vw, 18.5rem);
   inset-block-end: clamp(10rem, 18vh, 14rem);
-  inset-inline-start: clamp(8rem, 13vw, 13.5rem);
-  transform: rotate(1deg);
+  inset-inline-start: clamp(8.5rem, 14vw, 15rem);
+  transform: rotate(2deg);
   z-index: 2;
 }
 
-.hero-mag-bl-view {
-  inline-size: clamp(13rem, 19vw, 19.5rem);
-  inset-block-end: -1.75rem;
+.bg-mag-bl-view {
+  inline-size: clamp(13.5rem, 20vw, 20.5rem);
+  inset-block-end: -1.5rem;
   inset-inline-start: -0.75rem;
   transform: rotate(2deg);
   z-index: 3;
 }
 
-.hero-mag-upper-strip {
-  inset-block-start: clamp(8.5rem, 17vh, 13rem);
-  inset-inline-start: 49%;
-  transform: translateX(-50%) rotate(7deg);
+.bg-mag-upper-strip {
+  inset-block-start: clamp(3.5rem, 7vh, 6rem);
+  inset-inline-start: 50%;
+  transform: translateX(-50%) rotate(6deg);
   z-index: 3;
 }
 
-.hero-mag-tr-pop {
-  inline-size: clamp(12rem, 17.5vw, 18rem);
-  inset-block-start: -1.5rem;
-  inset-inline-end: clamp(10rem, 18vw, 19.5rem);
+.bg-mag-tr-pop {
+  inline-size: clamp(12.5rem, 18.5vw, 19rem);
+  inset-block-start: -1.25rem;
+  inset-inline-end: clamp(11rem, 20vw, 21rem);
   transform: rotate(22deg);
   z-index: 2;
 }
 
-.hero-mag-tr-grid {
-  inset-block-start: 0;
+.bg-mag-tr-grid {
+  inset-block-start: -0.5rem;
   inset-inline-end: -0.25rem;
   transform: rotate(0deg);
   z-index: 1;
 }
 
-.hero-mag-mr-cosmo {
-  inline-size: clamp(13rem, 19.5vw, 20.5rem);
-  inset-block-start: clamp(11rem, 20vh, 15.5rem);
-  inset-inline-end: clamp(10.5rem, 18vw, 19.5rem);
+.bg-mag-mr-cosmo {
+  inline-size: clamp(13.5rem, 20.5vw, 21.5rem);
+  inset-block-start: clamp(9.5rem, 18vh, 14rem);
+  inset-inline-end: clamp(11rem, 19vw, 20.5rem);
   transform: rotate(-8deg);
   z-index: 4;
 }
 
-.hero-mag-mr-elle {
-  inline-size: clamp(13rem, 19vw, 20rem);
-  inset-block-start: clamp(19rem, 33vh, 24rem);
+.bg-mag-mr-elle {
+  inline-size: clamp(13.5rem, 20vw, 21rem);
+  inset-block-start: clamp(18rem, 32vh, 23rem);
   inset-inline-end: -0.5rem;
   transform: rotate(1deg);
   z-index: 3;
 }
 
-.hero-mag-br-drama {
-  inline-size: clamp(13rem, 18.5vw, 19.5rem);
-  inset-block-end: clamp(12.5rem, 22vh, 17rem);
-  inset-inline-end: clamp(4.5rem, 8vw, 8.5rem);
+.bg-mag-mr-extra {
+  inline-size: clamp(12rem, 17.5vw, 18rem);
+  inset-block-start: 48%;
+  inset-inline-end: clamp(4.5rem, 8.5vw, 9rem);
+  transform: rotate(-12deg);
+  z-index: 2;
+}
+
+.bg-mag-br-drama {
+  inline-size: clamp(13.5rem, 19.5vw, 20.5rem);
+  inset-block-end: clamp(12rem, 22vh, 17rem);
+  inset-inline-end: clamp(5rem, 9vw, 9.5rem);
   transform: rotate(-3deg);
   z-index: 4;
 }
 
-.hero-mag-br-lookbook {
+.bg-mag-br-lookbook {
   inset-block-end: -1rem;
   inset-inline-end: -0.5rem;
   transform: rotate(2deg);
   z-index: 3;
 }
 
-.hero-mag-bc-fan-left {
-  inline-size: clamp(13rem, 19vw, 19.5rem);
-  inset-block-end: -2.5rem;
-  inset-inline-start: clamp(15rem, 22vw, 23rem);
+.bg-mag-bc-fan-left {
+  inline-size: clamp(13.5rem, 20vw, 20.5rem);
+  inset-block-end: -2.25rem;
+  inset-inline-start: clamp(15rem, 23vw, 24rem);
   transform: rotate(16deg);
   z-index: 2;
 }
 
-.hero-mag-bc-spread {
+.bg-mag-bc-spread {
   inset-block-end: -0.75rem;
-  inset-inline-start: 51%;
+  inset-inline-start: 50%;
   transform: translateX(-50%) rotate(-3deg);
   z-index: 3;
 }
 
-.hero-mag-bc-fan-right {
-  inline-size: clamp(12.5rem, 18vw, 18.5rem);
-  inset-block-end: -3rem;
-  inset-inline-end: clamp(14rem, 21vw, 22rem);
+.bg-mag-bc-fan-right {
+  inline-size: clamp(13rem, 19vw, 19.5rem);
+  inset-block-end: -2.5rem;
+  inset-inline-end: clamp(14rem, 22vw, 23rem);
   transform: rotate(-18deg);
   z-index: 2;
 }
 
-@media (max-width: 74rem) {
-  .hero-magazines .mag-cover {
-    inline-size: clamp(7.5rem, 18vw, 12.5rem);
+@media (max-width: 54rem) {
+  .magazine-collage .mag-cover {
+    inline-size: clamp(7.5rem, 24vw, 11.5rem);
   }
-  .hero-mag-bc-spread {
-    inline-size: clamp(13rem, 34vw, 21rem);
+  .bg-mag-bc-spread {
+    inline-size: clamp(13.5rem, 48vw, 19rem);
   }
-  .hero-mag-tl-main,
-  .hero-mag-mr-cosmo,
-  .hero-mag-upper-strip,
-  .hero-mag-bl-style,
-  .hero-mag-bc-fan-left,
-  .hero-mag-bc-fan-right {
+  .bg-mag-tl-main,
+  .bg-mag-mr-cosmo,
+  .bg-mag-ml-extra,
+  .bg-mag-mr-extra,
+  .bg-mag-upper-strip {
     display: none;
   }
-  .hero-mag-tr-pop {
-    inset-inline-end: 5rem;
+  .bg-mag-tr-pop {
+    inset-inline-end: 4.5rem;
   }
-  .hero-mag-br-drama {
+  .bg-mag-br-drama {
     inset-block-end: 7.5rem;
     inset-inline-end: -1rem;
   }
 }
 
-@media (max-width: 48rem) {
-  .hero-magazines .mag-cover {
-    inline-size: clamp(6.5rem, 26vw, 9.5rem);
+@media (max-width: 36rem) {
+  .magazine-collage .mag-cover {
+    inline-size: clamp(6.5rem, 27vw, 9.25rem);
   }
-  .hero-mag-bc-spread {
-    inline-size: clamp(13rem, 56vw, 18rem);
+  .bg-mag-bc-spread {
+    inline-size: clamp(13rem, 58vw, 18rem);
   }
-  .hero-mag-tl-3,
-  .hero-mag-tl-4,
-  .hero-mag-tr-pop {
+  .bg-mag-tl-3,
+  .bg-mag-tl-4 {
     display: none;
   }
 }
@@ -773,7 +692,7 @@ p {
 }
 
 .btn-secondary {
-  background-color: var(--cream);
+  background-color: transparent;
   color: var(--rose);
   border-color: var(--rose);
 }
@@ -793,11 +712,10 @@ p {
    ========================================================================== */
 
 .site-header {
-  position: sticky;
-  inset-block-start: 0;
+  position: relative;
   z-index: 40;
-  background-color: var(--blush);
-  border-block-end: 2px solid var(--rose);
+  width: 100%;
+  background-color: transparent;
 }
 
 .site-header.is-measuring * {
@@ -808,10 +726,13 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 0.75rem;
   min-block-size: var(--header-height);
-  inline-size: min(100% - 2rem, var(--max-width));
+  width: 100%;
+  max-width: var(--max-width);
   margin-inline: auto;
+  padding-inline: 1rem;
+  min-width: 0;
 }
 
 .header-inner > * {
@@ -822,18 +743,21 @@ p {
 .site-logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.45rem;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.0625rem;
-  letter-spacing: 0.12em;
+  font-size: clamp(0.68rem, 2.5vw, 1.0625rem);
+  letter-spacing: clamp(0.02em, 0.18vw, 0.1em);
   color: var(--rose);
   text-decoration: none;
   min-block-size: 44px;
+  min-width: 0;
 }
 
 .brand-monogram {
   flex-shrink: 0;
+  inline-size: clamp(1.85rem, 5vw, 2.5rem);
+  block-size: auto;
 }
 
 .site-nav {
@@ -844,15 +768,16 @@ p {
 .menu-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   min-block-size: 44px;
   min-inline-size: 44px;
-  padding-inline: 1rem;
+  padding-inline: 0.875rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--rose);
-  background: var(--cream);
+  background: transparent;
   color: var(--rose);
   font: inherit;
+  font-size: 0.9375rem;
   font-weight: 700;
   cursor: pointer;
   anchor-name: --menu-button;
@@ -867,18 +792,18 @@ p {
 .site-menu {
   position: fixed;
   inset: auto;
-  inset-block-start: 5rem;
+  inset-block-start: 4.5rem;
   inset-block-start: anchor(--menu-button bottom);
   inset-inline-end: 1rem;
-  inline-size: min(85dvw, 22rem);
-  max-inline-size: calc(100dvw - 2rem);
+  inline-size: min(calc(100% - 2rem), 22rem);
+  max-inline-size: calc(100% - 2rem);
   block-size: fit-content;
   max-block-size: calc(100dvh - 6rem);
   margin-block-start: 0.5rem;
   padding: 0.75rem;
   border-radius: var(--radius-md);
   border: 2px solid var(--rose);
-  background: var(--cream);
+  background: var(--blush);
   list-style: none;
   overflow: auto;
   opacity: 0;
@@ -978,28 +903,18 @@ p {
 }
 
 /* ==========================================================================
-   Hero Section — Full Moodboard Cover Layout (Logo in the Middle)
+   Hero Section — Transparent Centerpiece Over Sitewide Magazine Collage
    ========================================================================== */
 
 .hero {
   position: relative;
-  min-block-size: clamp(52rem, calc(100dvh - var(--header-height)), 68rem);
+  min-block-size: clamp(36rem, calc(100dvh - var(--header-height)), 58rem);
   display: grid;
   align-items: center;
   justify-items: center;
-  padding-block: clamp(14rem, 25vh, 17rem) clamp(13rem, 24vh, 16rem);
-  padding-inline: 1.5rem;
-  background-color: var(--blush);
-  overflow: hidden;
-}
-
-.hero-top-monogram {
-  position: absolute;
-  inset-block-start: clamp(0.75rem, 2.5vh, 2rem);
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  z-index: 6;
-  pointer-events: none;
+  padding-block: clamp(4rem, 12vh, 9rem);
+  padding-inline: 1rem;
+  background-color: transparent;
 }
 
 .hero-centerpiece {
@@ -1009,9 +924,8 @@ p {
   justify-items: center;
   text-align: center;
   gap: 0.65rem;
-  padding: clamp(1rem, 2.5vw, 1.75rem) clamp(1.5rem, 3.5vw, 2.5rem);
-  background-color: var(--blush);
-  border-radius: var(--radius-lg);
+  padding: clamp(1rem, 2.5vw, 1.75rem);
+  background-color: transparent;
   max-inline-size: min(100%, 44rem);
 }
 
@@ -1042,8 +956,7 @@ p {
 
 .metrics-strip {
   padding-block: 1.75rem;
-  background-color: var(--cream);
-  border-block-start: 2px solid var(--rose);
+  background-color: transparent;
   position: relative;
   z-index: 12;
 }
@@ -1058,8 +971,8 @@ p {
 }
 
 .metrics-grid li {
-  background: var(--blush);
-  border: 1.5px solid var(--rose);
+  background: transparent;
+  border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   padding: 0.85rem 1rem;
 }
@@ -1091,19 +1004,29 @@ p {
   padding-block: 0.875rem;
   position: relative;
   z-index: 12;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+  contain: layout paint;
 }
 
 .ticker-shell {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  inline-size: min(100% - 2rem, var(--max-width));
+  gap: 0.75rem;
+  width: 100%;
+  max-width: var(--max-width);
   margin-inline: auto;
+  padding-inline: 1rem;
+  min-width: 0;
 }
 
 .ticker-viewport {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
+  touch-action: pan-y;
   mask-image: linear-gradient(to right, transparent, var(--rose) 4%, var(--rose) 96%, transparent);
 }
 
@@ -1196,30 +1119,21 @@ p {
 }
 
 /* ==========================================================================
-   Sections & Editorial Panels (allowing perimeter magazines to show around edges)
+   Sections & Cards — Colourless, Transparent Backgrounds
    ========================================================================== */
 
 .section {
   padding-block: clamp(2.5rem, 5vw, 4rem);
+  background-color: transparent;
 }
 
-.section > .container {
-  border-radius: var(--radius-lg);
-  padding: clamp(1.75rem, 4vw, 3.25rem);
-  border: 2px solid var(--rose);
-  background-color: var(--blush);
-}
-
-.section-cream > .container {
-  background-color: var(--cream);
-}
-
-.section-lilac > .container {
-  background-color: var(--lilac);
-}
-
+.section > .container,
+.section-cream > .container,
+.section-lilac > .container,
 .section-sky > .container {
-  background-color: var(--sky);
+  background-color: transparent;
+  border: 0;
+  padding-block: clamp(1rem, 2.5vw, 2rem);
 }
 
 /* Filter bar */
@@ -1235,7 +1149,7 @@ p {
   padding-inline: 1.125rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--rose);
-  background: var(--cream);
+  background: transparent;
   color: var(--rose);
   font: inherit;
   font-size: 0.9375rem;
@@ -1252,7 +1166,7 @@ p {
 /* Case studies grid */
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
   gap: 1.5rem;
   list-style: none;
   margin: 0;
@@ -1264,23 +1178,11 @@ p {
   flex-direction: column;
   justify-content: space-between;
   gap: 1.25rem;
-  background: var(--cream);
+  background: transparent;
   border: 2px solid var(--rose);
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 3vw, 2rem);
-  transition: background-color 0.2s ease;
-}
-
-.case-card:nth-child(2n) {
-  background: var(--lilac);
-}
-
-.case-card:nth-child(3n) {
-  background: var(--sky);
-}
-
-.case-card:hover {
-  background: var(--butter);
+  transition: border-color 0.2s ease;
 }
 
 .case-card[hidden] {
@@ -1300,7 +1202,7 @@ p {
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: var(--radius-pill);
-  background: var(--blush);
+  background: transparent;
   border: 1.5px solid var(--rose);
   color: var(--rose);
 }
@@ -1339,10 +1241,10 @@ p {
   color: var(--rose);
 }
 
-/* Services grid */
+/* Services / Capabilities grid (colourless transparent backgrounds) */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16.5rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: 1.25rem;
   list-style: none;
   margin: 0;
@@ -1350,25 +1252,13 @@ p {
 }
 
 .service-card {
-  background: var(--blush);
+  background: transparent;
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   padding: 1.75rem;
   display: grid;
   gap: 0.875rem;
   align-content: start;
-}
-
-.service-card:nth-child(2) {
-  background: var(--sky);
-}
-
-.service-card:nth-child(3) {
-  background: var(--lilac);
-}
-
-.service-card:nth-child(4) {
-  background: var(--butter);
 }
 
 .service-number {
@@ -1420,7 +1310,7 @@ p {
 }
 
 .process-card {
-  background: var(--blush);
+  background: transparent;
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   padding: 1.75rem;
@@ -1444,7 +1334,7 @@ p {
   margin: 3rem 0 0;
   padding: clamp(1.75rem, 4vw, 2.75rem);
   border-radius: var(--radius-lg);
-  background: var(--butter);
+  background: transparent;
   border: 2px solid var(--rose);
   display: grid;
   gap: 1rem;
@@ -1474,7 +1364,7 @@ p {
 }
 
 .faq-item {
-  background: var(--cream);
+  background: transparent;
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -1544,7 +1434,7 @@ p {
 }
 
 .brief-form {
-  background: var(--blush);
+  background: transparent;
   border: 2px solid var(--rose);
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 3.5vw, 2.5rem);
@@ -1581,7 +1471,7 @@ p {
   padding: 0.75rem 0.875rem;
   border: 2px solid var(--rose);
   border-radius: var(--radius-sm);
-  background: var(--cream);
+  background: var(--blush);
   color: var(--rose);
   inline-size: 100%;
 }
@@ -1627,7 +1517,7 @@ p {
 .choice-fieldset {
   border: 2px solid var(--rose);
   border-radius: var(--radius-md);
-  background: var(--cream);
+  background: transparent;
   padding: 1rem 1.125rem;
   margin: 0;
 }
@@ -1747,7 +1637,7 @@ dialog.case-dialog::backdrop {
 
 /* Footer */
 .site-footer {
-  background: var(--cream);
+  background: transparent;
   color: var(--rose);
   border-block-start: 2px solid var(--rose);
   padding-block: 3.5rem 2.5rem;
