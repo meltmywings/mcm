@@ -767,12 +767,26 @@ p {
 }
 
 .site-header .site-logo {
-  background: color-mix(in srgb, var(--blush) 65%, transparent);
-  backdrop-filter: blur(5px);
-  border: 1.5px solid var(--rose);
-  border-radius: var(--radius-pill);
-  padding-inline: clamp(0.55rem, 1.5vw, 0.95rem);
-  padding-block: 0.25rem;
+  position: relative;
+  border: 0;
+  padding-inline: clamp(0.65rem, 1.8vw, 1.15rem);
+  padding-block: 0.35rem;
+}
+
+.site-header .site-logo::before {
+  content: '';
+  position: absolute;
+  inset: -0.35rem -0.65rem;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--blush) 82%, transparent) 0%,
+    color-mix(in srgb, var(--blush) 48%, transparent) 58%,
+    transparent 100%
+  );
+  backdrop-filter: blur(4px);
+  mask-image: radial-gradient(ellipse at center, var(--blush) 38%, transparent 100%);
 }
 
 .brand-monogram {
