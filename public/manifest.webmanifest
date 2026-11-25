@@ -1,0 +1,17 @@
+{
+  "name": "Main Character Media",
+  "short_name": "MCM",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "background_color": "#F8DCE8",
+  "theme_color": "#F8DCE8",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
