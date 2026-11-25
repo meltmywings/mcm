@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#121110"/>
-  <path d="M12 46V18h7.5l8.5 16.2L36.5 18H44v28h-6.4V28.4L29.8 43h-3.6l-7.8-14.6V46H12Z" fill="#FAF7F2"/>
-  <circle cx="51" cy="42" r="5" fill="#FF573B"/>
+  <rect width="64" height="64" rx="16" fill="#F8DCE8"/>
+  <ellipse cx="32" cy="33" rx="26" ry="8.5" transform="rotate(-14 32 33)" stroke="#F8D98B" stroke-width="2.5"/>
+  <text x="11" y="38" font-family="Georgia, serif" font-size="25" font-weight="700" fill="#F4A6C1">M</text>
+  <text x="31" y="47" font-family="Georgia, serif" font-size="25" font-weight="700" fill="#F4A6C1">C</text>
+  <path d="M44 26l1.4 3.6L49 31l-3.6 1.4L44 36l-1.4-3.6L39 31l3.6-1.4L44 26Z" fill="#F8D98B"/>
 </svg>
-

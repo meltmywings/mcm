@@ -79,7 +79,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       'Creator duet & stitch prompt kit',
       'Whitelisted Spark Ads creative matrix',
     ],
-    accentColor: '#C9240C',
+    accentColor: '#F4A6C1',
   },
   {
     id: 'kinetix-audio',
@@ -101,7 +101,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       'Run-club pop-up capture units',
       'Cross-platform sound-pack trend',
     ],
-    accentColor: '#1E4D3B',
+    accentColor: '#B9D7ED',
   },
   {
     id: 'solstice-matcha',
@@ -123,7 +123,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       'Creator UGC licensing pipeline',
       'Full-funnel retention creative',
     ],
-    accentColor: '#2B3A67',
+    accentColor: '#D9C5E9',
   },
   {
     id: 'nocturne-denim',
@@ -145,7 +145,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       'Stylist seeding & fit-check chain',
       'Broadcast channel drop mechanics',
     ],
-    accentColor: '#5B2E48',
+    accentColor: '#F8D98B',
   },
 ];
 

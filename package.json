@@ -15,6 +15,7 @@
     "@oddbird/popover-polyfill": "latest"
   },
   "devDependencies": {
+    "@types/node": "^26.6.10",
     "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
