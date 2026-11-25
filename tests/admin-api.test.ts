@@ -148,6 +148,20 @@ describe('Studio Portal Auth, API endpoints, security & live CMS DOM updates', (
     }
   });
 
+  it('does not expose admin portal links on index.html and keeps minimal password overlay over workspace in admin.html', () => {
+    const root = path.resolve(process.cwd());
+    const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const adminHtml = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
+
+    expect(indexHtml).not.toContain('admin.html');
+    expect(indexHtml).not.toContain('/admin');
+    expect(indexHtml).not.toContain('Studio Portal');
+
+    expect(adminHtml).toContain('id="auth-gate"');
+    expect(adminHtml).toContain('id="admin-workspace" class="workspace is-locked"');
+    expect(adminHtml).not.toContain('Executive Access');
+  });
+
   it('requires authentication for admin mutations and protected endpoints, while serving active public CMS data and accepting briefs', async () => {
     const testSecret = `studio-pass-${Math.random().toString(36).slice(2)}`;
     process.env.MCM_ADMIN_PASSWORD = testSecret;

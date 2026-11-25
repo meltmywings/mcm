@@ -44,7 +44,17 @@ for (const name of endpoints) {
 
 writeFileSync(
   resolve(outDir, 'config.json'),
-  JSON.stringify({ version: 3 }, null, 2),
+  JSON.stringify(
+    {
+      version: 3,
+      routes: [
+        { src: '^/admin/?$', dest: '/admin.html' },
+        { handle: 'filesystem' },
+      ],
+    },
+    null,
+    2,
+  ),
 );
 
 console.log('Prepared Vercel Build Output API v3 in .vercel/output');

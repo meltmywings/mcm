@@ -41,36 +41,30 @@
   <main class="admin-main">
     <div id="admin-toast" class="admin-toast" role="status" aria-live="polite" hidden></div>
 
-    <!-- Password Gate -->
-    <section id="auth-gate" class="auth-gate" aria-labelledby="auth-heading">
+    <!-- Password Gate Overlay -->
+    <section id="auth-gate" class="auth-gate" aria-label="Studio Password">
       <div class="auth-card">
-        <p class="eyebrow">Executive Access</p>
-        <h1 id="auth-heading">Main Character Studio</h1>
-        <p class="auth-copy">
-          Enter the studio passcode to edit live website copy and case studies, moderate clients,
-          review incoming briefs, and publish campaigns or events.
-        </p>
-
         <form id="login-form" class="auth-form" novalidate>
-          <div class="field">
-            <label for="studio-passcode">Studio passcode</label>
+          <div class="auth-input-row">
+            <label for="studio-passcode" class="sr-only">Password</label>
             <input
               type="password"
               id="studio-passcode"
               name="passcode"
+              placeholder="Enter password"
               autocomplete="current-password"
               required
               data-error="passcode-error"
             />
-            <span id="passcode-error" class="error-msg" hidden></span>
+            <button type="submit" id="login-submit" class="btn btn-primary">Enter</button>
           </div>
-          <button type="submit" id="login-submit" class="btn btn-primary">Unlock Studio Portal</button>
+          <span id="passcode-error" class="error-msg" hidden></span>
         </form>
       </div>
     </section>
 
-    <!-- Authenticated Workspace -->
-    <section id="admin-workspace" class="workspace" hidden aria-label="Studio Management Workspace">
+    <!-- Admin Console Workspace -->
+    <section id="admin-workspace" class="workspace is-locked" inert aria-hidden="true" aria-label="Studio Management Workspace">
       <nav class="tab-bar" aria-label="Studio sections">
         <button type="button" class="tab-btn" data-tab="content" aria-selected="true">Site &amp; Case Studies</button>
         <button type="button" class="tab-btn" data-tab="clients" aria-selected="false">Clients &amp; Moderation</button>

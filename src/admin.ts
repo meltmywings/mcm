@@ -55,9 +55,24 @@ function setAuthenticatedUi(authenticated: boolean): void {
   const authGate = document.getElementById('auth-gate');
   const workspace = document.getElementById('admin-workspace');
   const logoutBtn = document.getElementById('logout-btn');
+  const passcodeInput = document.getElementById('studio-passcode') as HTMLInputElement | null;
+
   if (authGate) authGate.hidden = authenticated;
-  if (workspace) workspace.hidden = !authenticated;
+  if (workspace) {
+    workspace.hidden = false;
+    workspace.classList.toggle('is-locked', !authenticated);
+    if (authenticated) {
+      workspace.removeAttribute('inert');
+      workspace.removeAttribute('aria-hidden');
+    } else {
+      workspace.setAttribute('inert', '');
+      workspace.setAttribute('aria-hidden', 'true');
+    }
+  }
   if (logoutBtn) logoutBtn.hidden = !authenticated;
+  if (!authenticated && passcodeInput) {
+    passcodeInput.focus();
+  }
 }
 
 function populateSiteContentForm(): void {
@@ -399,6 +414,12 @@ export async function initAdminApp(): Promise<void> {
 
   logoutBtn?.addEventListener('click', async () => {
     await apiJson('/api/auth', { method: 'DELETE' }).catch(() => {});
+    state.clients = [];
+    state.submissions = [];
+    const clientsList = document.getElementById('clients-list');
+    const inboxList = document.getElementById('inbox-list');
+    if (clientsList) clientsList.replaceChildren();
+    if (inboxList) inboxList.replaceChildren();
     setAuthenticatedUi(false);
     showToast('Studio locked.');
   });
