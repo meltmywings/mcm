@@ -10,3 +10,4 @@ npm test         # Run Vitest unit test suite
 npm run build    # Type-check and build production bundle to dist/
 npm run preview  # Preview production build locally
 ```
+
