@@ -1,14 +1,17 @@
 import { TICKER_ITEMS } from '../data/agency';
 
-export function renderTicker(track: HTMLElement | null): void {
+export function renderTicker(
+  track: HTMLElement | null,
+  sourceItems: readonly string[] = TICKER_ITEMS,
+): void {
   if (!track) return;
-  const items = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  const items = [...sourceItems, ...sourceItems];
   track.replaceChildren(
     ...items.map((text, index) => {
       const li = document.createElement('li');
       li.className = 'ticker-item';
       li.textContent = text;
-      if (index >= TICKER_ITEMS.length) {
+      if (index >= sourceItems.length) {
         li.setAttribute('aria-hidden', 'true');
       }
       return li;

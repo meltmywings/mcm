@@ -4,11 +4,23 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSessionToken, verifyPasscode, verifySessionToken } from '../api/_lib/auth';
+import {
+  SUBMISSION_RETENTION_DAYS,
+  isSubmissionActive,
+  pruneAndSortSubmissions,
+} from '../api/_lib/store';
 import authHandler from '../api/auth';
 import clientsHandler from '../api/clients';
 import cmsHandler from '../api/cms';
+import mediaHandler from '../api/media';
 import submissionsHandler from '../api/submissions';
-import { applySiteContent, renderCampaigns } from '../src/scripts/cmsView';
+import {
+  applyHiddenSections,
+  applySiteContent,
+  renderCampaigns,
+  renderCustomSections,
+  renderHeroButtons,
+} from '../src/scripts/cmsView';
 
 function createMockReq(options: {
   method: string;
@@ -76,6 +88,9 @@ describe('Studio Portal Auth, API endpoints, security & live CMS DOM updates', (
   const originalKvToken = process.env.KV_REST_API_TOKEN;
   const originalUpstashUrl = process.env.UPSTASH_REDIS_REST_URL;
   const originalUpstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const originalBlobToken = process.env.BLOB_READ_WRITE_TOKEN;
+  const originalBlobStoreId = process.env.BLOB_STORE_ID;
+  const originalOidcToken = process.env.VERCEL_OIDC_TOKEN;
   const tmpStore = '/tmp/mcm-cms-state.json';
 
   beforeEach(() => {
@@ -83,6 +98,9 @@ describe('Studio Portal Auth, API endpoints, security & live CMS DOM updates', (
     delete process.env.KV_REST_API_TOKEN;
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.BLOB_READ_WRITE_TOKEN;
+    delete process.env.BLOB_STORE_ID;
+    delete process.env.VERCEL_OIDC_TOKEN;
     if (fs.existsSync(tmpStore)) {
       fs.unlinkSync(tmpStore);
     }
@@ -104,6 +122,15 @@ describe('Studio Portal Auth, API endpoints, security & live CMS DOM updates', (
 
     if (originalUpstashToken === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN;
     else process.env.UPSTASH_REDIS_REST_TOKEN = originalUpstashToken;
+
+    if (originalBlobToken === undefined) delete process.env.BLOB_READ_WRITE_TOKEN;
+    else process.env.BLOB_READ_WRITE_TOKEN = originalBlobToken;
+
+    if (originalBlobStoreId === undefined) delete process.env.BLOB_STORE_ID;
+    else process.env.BLOB_STORE_ID = originalBlobStoreId;
+
+    if (originalOidcToken === undefined) delete process.env.VERCEL_OIDC_TOKEN;
+    else process.env.VERCEL_OIDC_TOKEN = originalOidcToken;
 
     if (fs.existsSync(tmpStore)) {
       fs.unlinkSync(tmpStore);
@@ -327,5 +354,183 @@ describe('Studio Portal Auth, API endpoints, security & live CMS DOM updates', (
     expect(eventsGrid?.querySelectorAll('li')).toHaveLength(1);
     expect(eventsGrid?.textContent).toContain('Autumn Creator Dinner');
     expect(eventsGrid?.textContent).not.toContain('Draft Activation');
+  });
+
+  it('persists and renders custom sections (text, buttons, TikTok references), hero buttons, metrics, and hidden sections', async () => {
+    const testSecret = `studio-pass-${Math.random().toString(36).slice(2)}`;
+    process.env.MCM_ADMIN_PASSWORD = testSecret;
+
+    const loginRes = createMockRes();
+    await authHandler(
+      createMockReq({ method: 'POST', body: { password: testSecret } }),
+      loginRes.res,
+    );
+    const setCookie = loginRes.headers['set-cookie'];
+    const cookieHeader = Array.isArray(setCookie)
+      ? setCookie[0].split(';')[0]
+      : String(setCookie).split(';')[0];
+
+    const putCms = createMockRes();
+    await cmsHandler(
+      createMockReq({
+        method: 'PUT',
+        headers: { cookie: cookieHeader },
+        body: {
+          heroButtons: [{ id: 'hb-1', label: 'Book Studio', href: '#brief', variant: 'primary' }],
+          hiddenSections: ['ticker'],
+          customSections: [
+            {
+              id: 'sec-tiktok',
+              eyebrow: 'TikTok Feed',
+              heading: 'Latest Creator Cuts',
+              subtitle: 'Watch recent launches.',
+              elements: [
+                { id: 'el-txt', type: 'text', title: 'Format Note', body: 'Shot vertically in 4K.' },
+                { id: 'el-btn', type: 'button', label: 'Pitch Us', href: '#brief', variant: 'secondary' },
+                {
+                  id: 'el-ref',
+                  type: 'reference',
+                  platform: 'tiktok',
+                  title: 'Vespera Launch Cut',
+                  handle: '@vespera',
+                  url: 'https://www.tiktok.com/@vespera',
+                  caption: '64M views in 6 weeks.',
+                },
+              ],
+            },
+          ],
+        },
+      }),
+      putCms.res,
+    );
+    expect(putCms.statusCode).toBe(200);
+
+    const publicCms = createMockRes();
+    await cmsHandler(createMockReq({ method: 'GET', url: '/api/cms' }), publicCms.res);
+    const payload = publicCms.json();
+    expect(payload.heroButtons).toHaveLength(1);
+    expect(payload.hiddenSections).toEqual(['ticker']);
+    expect(payload.customSections[0].elements).toHaveLength(3);
+
+    document.body.innerHTML = `
+      <div id="hero-actions"><button type="button" id="install-app-btn" hidden>Install</button></div>
+      <div class="ticker-band" data-section="ticker"></div>
+      <div id="custom-sections-root"></div>
+    `;
+
+    renderHeroButtons(document.getElementById('hero-actions'), payload.heroButtons);
+    expect(document.getElementById('hero-primary-cta')?.textContent).toBe('Book Studio');
+    expect(document.getElementById('install-app-btn')).not.toBeNull();
+
+    applyHiddenSections(document, payload.hiddenSections);
+    expect(document.querySelector<HTMLElement>('[data-section="ticker"]')?.hidden).toBe(true);
+
+    renderCustomSections(document.getElementById('custom-sections-root'), payload.customSections);
+    const customRoot = document.getElementById('custom-sections-root')!;
+    expect(customRoot.textContent).toContain('Latest Creator Cuts');
+    expect(customRoot.textContent).toContain('Shot vertically in 4K.');
+    expect(customRoot.textContent).toContain('Pitch Us');
+    expect(customRoot.textContent).toContain('Vespera Launch Cut');
+    expect(customRoot.querySelector('a[href="https://www.tiktok.com/@vespera"]')).not.toBeNull();
+  });
+
+  it('retains client messages for 30 days and prunes expired messages older than 30 days', () => {
+    expect(SUBMISSION_RETENTION_DAYS).toBe(30);
+    const now = Date.parse('2026-11-26T12:00:00.000Z');
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const freshSub = {
+      id: 'sub-fresh',
+      fullName: 'Ava Chen',
+      email: 'ava@studio.example',
+      brand: '@avastudio',
+      budget: '25k-50k',
+      channels: ['tiktok'],
+      notes: 'Campaign brief sent 1 day ago across TikTok and creators.',
+      status: 'new' as const,
+      createdAt: new Date(now - 1 * dayMs).toISOString(),
+    };
+    const day29Sub = {
+      ...freshSub,
+      id: 'sub-day29',
+      createdAt: new Date(now - 29 * dayMs).toISOString(),
+    };
+    const expiredSub = {
+      ...freshSub,
+      id: 'sub-expired',
+      createdAt: new Date(now - 31 * dayMs).toISOString(),
+    };
+
+    expect(isSubmissionActive(freshSub, now)).toBe(true);
+    expect(isSubmissionActive(day29Sub, now)).toBe(true);
+    expect(isSubmissionActive(expiredSub, now)).toBe(false);
+
+    const active = pruneAndSortSubmissions([expiredSub, day29Sub, freshSub], now);
+    expect(active.map((s) => s.id)).toEqual(['sub-fresh', 'sub-day29']);
+  });
+
+  it('uploads magazine photos via POST /api/media, serves them on GET, and persists pagePhotos + pageTextBlocks', async () => {
+    process.env.MCM_ADMIN_PASSWORD = 'media-test-passcode';
+    const token = createSessionToken();
+    const cookieHeader = `mcm_admin_session=${token}`;
+    const pngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+    const unauthUpload = createMockRes();
+    await mediaHandler(
+      createMockReq({
+        method: 'POST',
+        body: { contentType: 'image/png', dataBase64: pngBase64 },
+      }),
+      unauthUpload.res,
+    );
+    expect(unauthUpload.statusCode).toBe(401);
+
+    const uploadRes = createMockRes();
+    await mediaHandler(
+      createMockReq({
+        method: 'POST',
+        headers: { cookie: cookieHeader },
+        body: { contentType: 'image/png', dataBase64: pngBase64 },
+      }),
+      uploadRes.res,
+    );
+    expect(uploadRes.statusCode).toBe(201);
+    const uploadedUrl = uploadRes.json().url as string;
+    expect(uploadedUrl).toMatch(/^\/api\/media\?id=/);
+    const uploadedId = new URL(uploadedUrl, 'http://localhost').searchParams.get('id')!;
+
+    try {
+      const getMedia = createMockRes();
+      await mediaHandler(createMockReq({ method: 'GET', url: uploadedUrl }), getMedia.res);
+      expect(getMedia.statusCode).toBe(200);
+      expect(getMedia.headers['content-type']).toBe('image/png');
+
+      const putCms = createMockRes();
+      await cmsHandler(
+        createMockReq({
+          method: 'PUT',
+          headers: { cookie: cookieHeader },
+          body: {
+            pagePhotos: {
+              cover: [{ id: 'ph-up', src: uploadedUrl, caption: 'Uploaded Cover' }],
+            },
+            pageTextBlocks: {
+              work: [{ id: 'tb-1', style: 'article', title: 'Addendum', body: 'Extra column copy.' }],
+            },
+          },
+        }),
+        putCms.res,
+      );
+      expect(putCms.statusCode).toBe(200);
+
+      const getCms = createMockRes();
+      await cmsHandler(createMockReq({ method: 'GET', url: '/api/cms' }), getCms.res);
+      expect(getCms.json().pagePhotos.cover[0].src).toBe(uploadedUrl);
+      expect(getCms.json().pageTextBlocks.work[0].body).toBe('Extra column copy.');
+    } finally {
+      const uploadedPath = path.join(process.cwd(), '.data', 'media', uploadedId);
+      if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+    }
   });
 });

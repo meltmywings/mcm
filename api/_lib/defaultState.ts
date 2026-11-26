@@ -6,13 +6,51 @@ export const DEFAULT_CMS_STATE: CmsState = {
     brandSubtitle: 'CREATIVE MEDIA AGENCY',
     primaryCtaLabel: 'Launch a Campaign',
     secondaryCtaLabel: 'Explore Case Studies',
+    workEyebrow: 'Cover Stories',
     workHeading: 'Campaigns that hijacked the feed.',
     workSubtitle: 'Filter by channel discipline or inspect the full editorial strategy behind each launch.',
+    eventsEyebrow: 'On Now',
+    eventsHeading: 'Live Campaigns & Events.',
+    eventsSubtitle: 'Open creator castings, brand drops, and studio salons happening now.',
+    servicesEyebrow: 'Capabilities',
     servicesHeading: 'Built for the feed, styled like a cover shoot.',
+    servicesSubtitle:
+      'Every discipline inside Main Character Media is structured around taste, cultural fluency, and measurable growth.',
+    cultureEyebrow: 'Culture Lab',
+    cultureHeading: 'How we turn attention into icon status.',
+    cultureSubtitle:
+      'Our three-part operating cadence blends glossy magazine instinct with weekly retention telemetry.',
     cultureQuote:
-      '“Main Character Media gave us a voice people actively waited for in their feeds. Within six weeks, our waitlist grew by 38,000 and paid acquisition costs dropped by 41%.”',
-    cultureQuoteAuthor: 'Maya Lin-Vargas — VP of Brand, Solstice & Nocturne Group',
+      '“Main Character Media turned our launch into a weekly feed ritual — 38K waitlist signups & 41% lower CPA in six weeks.”',
+    cultureQuoteAuthor: 'Maya Lin-Vargas — VP Brand, Solstice',
+    faqEyebrow: 'FAQ',
+    faqHeading: 'Working with the studio.',
+    faqSubtitle:
+      'Answers to the most common questions on timelines, retainers, and creative production.',
+    briefEyebrow: 'Start a Project',
+    briefHeading: 'Put your brand in the spotlight.',
+    briefSubtitle:
+      'Tell us what you are launching, which channels matter most, and where you want to take market share. Our executive producers respond within one business day.',
+    briefSubmitLabel: 'Launch Your Brief',
   },
+  heroButtons: [
+    { id: 'hero-primary-cta', label: 'Launch a Campaign', href: '#brief', variant: 'primary' },
+    { id: 'hero-secondary-cta', label: 'Explore Case Studies', href: '#work', variant: 'secondary' },
+  ],
+  metrics: [
+    { id: 'metric-views', value: '480M+', label: 'Organic & Paid Views Driven' },
+    { id: 'metric-roas', value: '3.8x', label: 'Average Blended Social ROAS' },
+    { id: 'metric-creators', value: '140+', label: 'Vetted Culture Creators' },
+    { id: 'metric-launches', value: '42', label: 'Category-Defining Launches' },
+  ],
+  tickerItems: [
+    'TIKTOK & REELS PRODUCTION',
+    'CREATOR SEEDING ECOSYSTEMS',
+    'CULTURAL MOMENT ENGINEERING',
+    'PAID SOCIAL CREATIVE TESTING',
+    'FOUNDER PERSONAL BRANDING',
+    'COMMUNITY ARCHITECTURE',
+  ],
   caseStudies: [
     {
       id: 'vespera-botanicals',
@@ -35,6 +73,15 @@ export const DEFAULT_CMS_STATE: CmsState = {
         'Whitelisted Spark Ads creative matrix',
       ],
       accentColor: '#F4A6C1',
+      references: [
+        {
+          id: 'ref-vespera-tiktok',
+          platform: 'tiktok',
+          label: 'Nightstand Confessions Ep. 01',
+          url: 'https://www.tiktok.com/@vesperabotanicals',
+          handle: '@vesperabotanicals',
+        },
+      ],
     },
     {
       id: 'kinetix-audio',
@@ -57,6 +104,15 @@ export const DEFAULT_CMS_STATE: CmsState = {
         'Cross-platform sound-pack trend',
       ],
       accentColor: '#B9D7ED',
+      references: [
+        {
+          id: 'ref-kinetix-ig',
+          platform: 'instagram',
+          label: 'City Run Soundtrack Series',
+          url: 'https://www.instagram.com/',
+          handle: '@kinetixaudio',
+        },
+      ],
     },
     {
       id: 'solstice-matcha',
@@ -129,6 +185,177 @@ export const DEFAULT_CMS_STATE: CmsState = {
       isActive: true,
     },
   ],
+  services: [
+    {
+      id: 'srv-short-form',
+      number: '01',
+      title: 'Short-Form Studio',
+      tagline: 'Thumb-stopping episodic storytelling',
+      description:
+        'Concepting, scripting, shooting, and editing native vertical video built for retention curves—not repurposed TV commercials.',
+      outcomes: ['TikTok, Reels & YouTube Shorts', 'Episodic brand IP formats', '48-hour cultural trend response'],
+    },
+    {
+      id: 'srv-creators',
+      number: '02',
+      title: 'Creator Ecosystems',
+      tagline: 'Talent casting, seeding & co-creation',
+      description:
+        'We pair brands with voices audiences actually trust—managing briefing, usage rights, whitelisting, and ambassador programs.',
+      outcomes: ['Micro-to-macro creator casting', 'Always-on gifting & seeding', 'Usage & Spark Ads amplification'],
+    },
+    {
+      id: 'srv-community',
+      number: '03',
+      title: 'Community & Social Ops',
+      tagline: 'Daily publishing with a distinct voice',
+      description:
+        'Your brand shows up in comments, broadcasts, and replies with wit and cultural fluency, turning passive scrollers into regulars.',
+      outcomes: ['Channel strategy & editorial calendars', 'Active comment & DM community care', 'Founder & executive thought leadership'],
+    },
+    {
+      id: 'srv-paid',
+      number: '04',
+      title: 'Paid Social Creative',
+      tagline: 'Performance creative engineered to scale',
+      description:
+        'High-volume hook, body, and CTA testing matrices that feed Meta and TikTok algorithms fresh winners every single week.',
+      outcomes: ['Modular UGC & studio ad sprints', 'Creative analytics & hook audits', 'Landing-angle alignment'],
+    },
+  ],
+  processSteps: [
+    {
+      id: 'proc-01',
+      step: '01',
+      title: 'Signal & Character',
+      description:
+        'We audit your category tropes, comment sections, and cultural white space to define your brand’s unmistakable point of view.',
+    },
+    {
+      id: 'proc-02',
+      step: '02',
+      title: 'Creator-Grade Production',
+      description:
+        'Lean shoot days and remote creator pods deliver dozens of native vertical cuts designed around first-3-second visual hooks.',
+    },
+    {
+      id: 'proc-03',
+      step: '03',
+      title: 'Algorithmic Momentum',
+      description:
+        'Weekly retention teardowns tell us which storylines earned saves and shares—so every sprint compounds on the last.',
+    },
+  ],
+  faqs: [
+    {
+      id: 'faq-retainer',
+      question: 'Do you work on monthly retainers or campaign sprints?',
+      answer:
+        'Both. Most partners start with a 90-day Flagship Sprint to establish creative formats and test creator hooks, then transition into an ongoing monthly studio retainer covering production, community, and paid creative refreshes.',
+    },
+    {
+      id: 'faq-production',
+      question: 'Do we need to ship products to your studio for shoots?',
+      answer:
+        'Yes—for tactile product launches, you ship samples to our New York or Los Angeles production hubs (or directly to vetted creators in our network). We handle styling, casting, location scouting, and full post-production.',
+    },
+    {
+      id: 'faq-metrics',
+      question: 'How do you measure success beyond vanity views?',
+      answer:
+        'Every campaign tracks hold rate (3-second and 15-second retention), saves-per-reach, profile-to-site conversion, creator-attributed revenue, and blended CPA/ROAS across organic and whitelisted paid placements.',
+    },
+    {
+      id: 'faq-timeline',
+      question: 'How fast can Main Character Media launch a new account or campaign?',
+      answer:
+        'Discovery and voice architecture take 10 business days, with first creator kits shipped and studio production live by week three. By week four, your channels are publishing consistently.',
+    },
+  ],
+  customSections: [],
+  hiddenSections: [],
+  pagePhotos: {
+    cover: [{ id: 'ph-cover-1', src: '/magazines/mag-01.jpg', caption: 'Issue 01 Cover' }],
+    'glossary-1': [
+      { id: 'ph-gl1-1', src: '/magazines/cutouts/mag-02.png', caption: 'Runway Opening' },
+      { id: 'ph-gl1-2', src: '/magazines/cutouts/mag-05.png', caption: 'Floral Drop' },
+      { id: 'ph-gl1-3', src: '/magazines/cutouts/mag-09.png', caption: 'Front Row' },
+      { id: 'ph-gl1-4', src: '/magazines/cutouts/mag-04.png', caption: 'Duo Edit' },
+    ],
+    'glossary-2': [
+      { id: 'ph-gl2-1', src: '/magazines/cutouts/mag-03.png', caption: 'Editorial Portrait' },
+      { id: 'ph-gl2-2', src: '/magazines/cutouts/mag-13.png', caption: 'London Dispatch' },
+      { id: 'ph-gl2-3', src: '/magazines/cutouts/mag-08.png', caption: 'Backstage' },
+      { id: 'ph-gl2-4', src: '/magazines/cutouts/mag-15.png', caption: 'Issue Finale' },
+    ],
+    metrics: [
+      { id: 'ph-metrics-1', src: '/magazines/cutouts/mag-03.png', caption: 'Stage Edit' },
+      { id: 'ph-metrics-2', src: '/magazines/cutouts/mag-05.png', caption: 'Floral Bag Drop' },
+      { id: 'ph-metrics-3', src: '/magazines/cutouts/mag-09.png', caption: 'Studio Portrait' },
+      { id: 'ph-metrics-4', src: '/magazines/cutouts/mag-11.png', caption: 'Backstage' },
+    ],
+    work: [
+      { id: 'ph-work-1', src: '/magazines/cutouts/mag-02.png', caption: 'Runway Edit' },
+      { id: 'ph-work-2', src: '/magazines/cutouts/mag-05.png', caption: 'Editorial Bag' },
+      { id: 'ph-work-3', src: '/magazines/cutouts/mag-11.png', caption: 'Creator Press' },
+      { id: 'ph-work-4', src: '/magazines/cutouts/mag-04.png', caption: 'Lookbook Duo' },
+    ],
+    'work-2': [
+      { id: 'ph-work2-1', src: '/magazines/cutouts/mag-06.png', caption: 'Catwalk Moment' },
+      { id: 'ph-work2-2', src: '/magazines/cutouts/mag-05.png', caption: 'Launch Drop' },
+      { id: 'ph-work2-3', src: '/magazines/cutouts/mag-08.png', caption: 'Editorial Muse' },
+      { id: 'ph-work2-4', src: '/magazines/cutouts/mag-15.png', caption: 'Press Feature' },
+    ],
+    events: [
+      { id: 'ph-events-1', src: '/magazines/cutouts/mag-04.png', caption: 'Open Castings' },
+      { id: 'ph-events-2', src: '/magazines/cutouts/mag-05.png', caption: 'Accessory Edit' },
+      { id: 'ph-events-3', src: '/magazines/cutouts/mag-10.png', caption: 'Live Salon' },
+      { id: 'ph-events-4', src: '/magazines/cutouts/mag-02.png', caption: 'Runway Front' },
+    ],
+    services: [
+      { id: 'ph-services-1', src: '/magazines/cutouts/mag-05.png', caption: 'Styled Lookbook' },
+      { id: 'ph-services-2', src: '/magazines/cutouts/mag-03.png', caption: 'Stage Shoot' },
+      { id: 'ph-services-3', src: '/magazines/cutouts/mag-06.png', caption: 'Runway Shoot' },
+      { id: 'ph-services-4', src: '/magazines/cutouts/mag-07.png', caption: 'Front Row' },
+    ],
+    'services-2': [
+      { id: 'ph-services2-1', src: '/magazines/cutouts/mag-09.png', caption: 'Creator Desk' },
+      { id: 'ph-services2-2', src: '/magazines/cutouts/mag-05.png', caption: 'Drop Bag' },
+      { id: 'ph-services2-3', src: '/magazines/cutouts/mag-13.png', caption: 'London Edit' },
+      { id: 'ph-services2-4', src: '/magazines/cutouts/mag-14.png', caption: 'Paid Lab' },
+    ],
+    'culture-lab': [
+      { id: 'ph-culture-1', src: '/magazines/cutouts/mag-07.png', caption: 'Runway Study' },
+      { id: 'ph-culture-2', src: '/magazines/cutouts/mag-05.png', caption: 'Floral Props' },
+      { id: 'ph-culture-3', src: '/magazines/cutouts/mag-09.png', caption: 'Behind Lens' },
+      { id: 'ph-culture-4', src: '/magazines/cutouts/mag-12.png', caption: 'Afterhours' },
+    ],
+    faq: [
+      { id: 'ph-faq-1', src: '/magazines/cutouts/mag-12.png', caption: 'SoHo Edit' },
+      { id: 'ph-faq-2', src: '/magazines/cutouts/mag-05.png', caption: 'Studio Prop' },
+      { id: 'ph-faq-3', src: '/magazines/cutouts/mag-13.png', caption: 'London Walk' },
+      { id: 'ph-faq-4', src: '/magazines/cutouts/mag-08.png', caption: 'Studio Q&A' },
+    ],
+    'faq-2': [
+      { id: 'ph-faq2-1', src: '/magazines/cutouts/mag-14.png', caption: 'LA Production' },
+      { id: 'ph-faq2-2', src: '/magazines/cutouts/mag-05.png', caption: 'Editorial Bag' },
+      { id: 'ph-faq2-3', src: '/magazines/cutouts/mag-15.png', caption: 'Editors Pick' },
+      { id: 'ph-faq2-4', src: '/magazines/cutouts/mag-10.png', caption: 'Launch Week' },
+    ],
+    brief: [
+      { id: 'ph-brief-1', src: '/magazines/cutouts/mag-14.png', caption: 'New Business' },
+      { id: 'ph-brief-2', src: '/magazines/cutouts/mag-05.png', caption: 'Campaign Prop' },
+      { id: 'ph-brief-3', src: '/magazines/cutouts/mag-02.png', caption: 'Casting Call' },
+      { id: 'ph-brief-4', src: '/magazines/cutouts/mag-08.png', caption: 'Studio Desk' },
+    ],
+    directory: [
+      { id: 'ph-dir-1', src: '/magazines/cutouts/mag-15.png', caption: 'Back Cover' },
+      { id: 'ph-dir-2', src: '/magazines/cutouts/mag-05.png', caption: 'Press Kit' },
+      { id: 'ph-dir-3', src: '/magazines/cutouts/mag-03.png', caption: 'NY · LA · LDN' },
+      { id: 'ph-dir-4', src: '/magazines/cutouts/mag-11.png', caption: 'Issue 01 End' },
+    ],
+  },
+  pageTextBlocks: {},
   clients: [
     {
       id: 'cl-vespera',
@@ -175,4 +402,3 @@ export const DEFAULT_CMS_STATE: CmsState = {
     },
   ],
 };
-

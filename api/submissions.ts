@@ -2,12 +2,16 @@ import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { SubmissionRecord, SubmissionStatus } from '../src/types/cms';
 import { isAuthenticated, readJsonBody, sendJson } from './_lib/auth';
-import { loadCmsState, saveCmsState } from './_lib/store';
+import {
+  SUBMISSION_RETENTION_DAYS,
+  createSubmission,
+  deleteSubmission,
+  loadSubmissions,
+  updateSubmissionStatus,
+} from './_lib/store';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
   try {
-    const state = await loadCmsState();
-
     if (req.method === 'POST') {
       const body = await readJsonBody<Partial<SubmissionRecord>>(req);
       const fullName = String(body.fullName || '').trim();
@@ -32,12 +36,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         createdAt: new Date().toISOString(),
       };
 
-      await saveCmsState({
-        ...state,
-        submissions: [submission, ...state.submissions],
-      });
+      await createSubmission(submission);
 
-      sendJson(res, 201, { ok: true, submission });
+      sendJson(res, 201, { ok: true, submission, retentionDays: SUBMISSION_RETENTION_DAYS });
       return;
     }
 
@@ -47,7 +48,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (req.method === 'GET') {
-      sendJson(res, 200, { submissions: state.submissions });
+      const submissions = await loadSubmissions();
+      sendJson(res, 200, { submissions, retentionDays: SUBMISSION_RETENTION_DAYS });
       return;
     }
 
@@ -58,13 +60,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         return;
       }
 
-      const next = await saveCmsState({
-        ...state,
-        submissions: state.submissions.map((item) =>
-          item.id === body.id ? { ...item, status: body.status! } : item,
-        ),
-      });
-      sendJson(res, 200, { submissions: next.submissions });
+      const submissions = await updateSubmissionStatus(body.id, body.status);
+      sendJson(res, 200, { submissions, retentionDays: SUBMISSION_RETENTION_DAYS });
       return;
     }
 
@@ -74,11 +71,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         sendJson(res, 400, { error: 'Submission ID is required.' });
         return;
       }
-      const next = await saveCmsState({
-        ...state,
-        submissions: state.submissions.filter((item) => item.id !== body.id),
-      });
-      sendJson(res, 200, { submissions: next.submissions });
+
+      const submissions = await deleteSubmission(body.id);
+      sendJson(res, 200, { submissions, retentionDays: SUBMISSION_RETENTION_DAYS });
       return;
     }
 
@@ -87,4 +82,3 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     sendJson(res, 400, { error: 'Invalid submission payload' });
   }
 }
-

@@ -1,44 +1,64 @@
-import { FAQ_ITEMS } from '../data/agency';
+import { FAQ_ITEMS, type FaqItem } from '../data/agency';
 
-export function initFaq(container: HTMLElement | null): void {
-  if (!container) return;
-
-  const nodes = FAQ_ITEMS.map((item) => {
+function buildFaqNodes(items: readonly FaqItem[]): HTMLElement[] {
+  return items.map((item) => {
     const wrapper = document.createElement('div');
     wrapper.className = 'faq-item';
 
     const panelId = `${item.id}-panel`;
-    wrapper.innerHTML = `
-      <h3 class="faq-heading">
-        <button
-          type="button"
-          class="faq-trigger"
-          aria-expanded="false"
-          aria-controls="${panelId}"
-        >
-          <span>${item.question}</span>
-          <span class="faq-icon" aria-hidden="true">+</span>
-        </button>
-      </h3>
-      <div id="${panelId}" class="faq-panel" hidden>
-        <p>${item.answer}</p>
-      </div>
-    `;
 
-    const button = wrapper.querySelector<HTMLButtonElement>('.faq-trigger');
-    const panel = wrapper.querySelector<HTMLElement>(`#${panelId}`);
+    const heading = document.createElement('h3');
+    heading.className = 'faq-heading';
 
-    button?.addEventListener('click', () => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'faq-trigger';
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-controls', panelId);
+
+    const qSpan = document.createElement('span');
+    qSpan.textContent = item.question;
+
+    const icon = document.createElement('span');
+    icon.className = 'faq-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = '+';
+
+    button.append(qSpan, icon);
+    heading.append(button);
+
+    const panel = document.createElement('div');
+    panel.id = panelId;
+    panel.className = 'faq-panel';
+    panel.hidden = true;
+
+    const answerP = document.createElement('p');
+    answerP.textContent = item.answer;
+    panel.append(answerP);
+
+    button.addEventListener('click', () => {
       const isExpanded = button.getAttribute('aria-expanded') === 'true';
       button.setAttribute('aria-expanded', String(!isExpanded));
-      if (panel) {
-        panel.hidden = isExpanded;
-      }
+      panel.hidden = isExpanded;
     });
 
+    wrapper.append(heading, panel);
     return wrapper;
   });
-
-  container.replaceChildren(...nodes);
 }
 
+export function initFaq(
+  container: HTMLElement | null,
+  items: readonly FaqItem[] = FAQ_ITEMS,
+  container2?: HTMLElement | null,
+): void {
+  if (!container) return;
+
+  if (container2) {
+    container.replaceChildren(...buildFaqNodes(items.slice(0, 2)));
+    container2.replaceChildren(...buildFaqNodes(items.slice(2)));
+    return;
+  }
+
+  container.replaceChildren(...buildFaqNodes(items));
+}

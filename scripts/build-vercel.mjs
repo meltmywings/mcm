@@ -13,7 +13,7 @@ mkdirSync(functionsDir, { recursive: true });
 
 cpSync(resolve(root, 'dist'), staticDir, { recursive: true });
 
-const endpoints = ['auth', 'cms', 'clients', 'submissions'];
+const endpoints = ['auth', 'cms', 'clients', 'submissions', 'media'];
 
 for (const name of endpoints) {
   const fnDir = resolve(functionsDir, `${name}.func`);
@@ -27,6 +27,9 @@ for (const name of endpoints) {
     target: 'node22',
     format: 'esm',
     sourcemap: false,
+    banner: {
+      js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+    },
   });
 
   writeFileSync(

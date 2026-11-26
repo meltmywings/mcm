@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" fill="none">
+  <ellipse cx="60" cy="48" rx="51" ry="16" transform="rotate(-14 60 48)" stroke="#F8D98B" stroke-width="5"/>
+  <text x="16" y="57" font-family="Georgia, serif" font-size="48" font-weight="700" fill="#F4A6C1">M</text>
+  <text x="55" y="75" font-family="Georgia, serif" font-size="48" font-weight="700" fill="#F4A6C1">C</text>
+  <path d="M84 32l3 7.5L94.5 42.5l-7.5 3L84 53l-3-7.5-7.5-3 7.5-3L84 32Z" fill="#F8D98B"/>
+</svg>

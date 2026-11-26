@@ -1,0 +1,38 @@
+{
+  "id": "/admin.html",
+  "name": "MCM Studio Portal",
+  "short_name": "MCM Studio",
+  "description": "Main Character Media Studio Portal for updating live site copy, case studies, campaigns, clients, and briefs.",
+  "start_url": "/admin.html",
+  "scope": "/admin",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#F8DCE8",
+  "theme_color": "#F8DCE8",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

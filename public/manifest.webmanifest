@@ -1,12 +1,33 @@
 {
+  "id": "/",
   "name": "Main Character Media",
   "short_name": "MCM",
+  "description": "Y2K-inspired creative media agency turning ambitious brands into cultural icons across TikTok, Reels, creator ecosystems, and paid social.",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "background_color": "#F8DCE8",
   "theme_color": "#F8DCE8",
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/favicon.svg",
       "sizes": "any",
