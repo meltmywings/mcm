@@ -285,6 +285,24 @@ const CUSTOM_PAGE_PHOTOS = [
   '/magazines/cutouts/mag-15.png',
 ];
 
+const CUTOUT_DIMENSIONS: Record<string, [number, number]> = {
+  '/magazines/cutouts/mag-01.png': [688, 1032],
+  '/magazines/cutouts/mag-02.png': [337, 651],
+  '/magazines/cutouts/mag-03.png': [908, 1016],
+  '/magazines/cutouts/mag-04.png': [908, 608],
+  '/magazines/cutouts/mag-05.png': [564, 1019],
+  '/magazines/cutouts/mag-06.png': [240, 574],
+  '/magazines/cutouts/mag-07.png': [155, 513],
+  '/magazines/cutouts/mag-08.png': [716, 691],
+  '/magazines/cutouts/mag-09.png': [475, 676],
+  '/magazines/cutouts/mag-10.png': [596, 490],
+  '/magazines/cutouts/mag-11.png': [480, 413],
+  '/magazines/cutouts/mag-12.png': [446, 804],
+  '/magazines/cutouts/mag-13.png': [257, 594],
+  '/magazines/cutouts/mag-14.png': [486, 1032],
+  '/magazines/cutouts/mag-15.png': [747, 680],
+};
+
 function buildPhotoFigure(photo: MagazinePhoto, isCover: boolean, index = 0): HTMLElement | null {
   const cleanSrc = safeImageSrc(photo.src);
   if (!cleanSrc) return null;
@@ -300,6 +318,11 @@ function buildPhotoFigure(photo: MagazinePhoto, isCover: boolean, index = 0): HT
 
   const img = document.createElement('img');
   img.src = cleanSrc;
+  const dims = CUTOUT_DIMENSIONS[cleanSrc];
+  if (dims) {
+    img.width = dims[0];
+    img.height = dims[1];
+  }
   img.alt = '';
   img.className = 'mag-photo-img';
   img.decoding = 'async';

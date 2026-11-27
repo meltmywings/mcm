@@ -12,17 +12,23 @@ const bookStates = new WeakMap<HTMLElement, PaginatorBookState>();
 
 const MAX_CONTINUATION_PAGES = 10;
 
-const SPLITTABLE_SELECTORS = [
-  '.mag-page-extra-texts',
-  '.work-grid',
-  '.events-grid',
-  '.services-grid',
-  '.faq-list',
-  '.custom-elements-grid',
-  '.metrics-grid',
-  '.process-grid',
-  '.footer-grid',
-  '.brief-form',
+interface SplittableRule {
+  selector: string;
+  minKeep: number;
+}
+
+const PRIMARY_SPLIT_RULES: SplittableRule[] = [
+  { selector: '.mag-page-extra-texts', minKeep: 0 },
+  { selector: '.work-grid', minKeep: 1 },
+  { selector: '.events-grid', minKeep: 1 },
+  { selector: '.services-grid', minKeep: 1 },
+  { selector: '.faq-list', minKeep: 1 },
+  { selector: '.custom-elements-grid', minKeep: 1 },
+  { selector: '.metrics-grid', minKeep: 1 },
+  { selector: '.process-grid', minKeep: 1 },
+  { selector: '.footer-grid', minKeep: 1 },
+  { selector: '.mag-ref-photos', minKeep: 0 },
+  { selector: '.brief-form', minKeep: 1 },
 ];
 
 function getOrCreateState(book: HTMLElement): PaginatorBookState {
@@ -49,6 +55,13 @@ export function restorePaginatedFlow(book: HTMLElement): void {
           });
       }
       if (record.container.isConnected) {
+        if (record.container.classList.contains('mag-ref-left-stage')) {
+          const extra = record.container.querySelector(':scope > .mag-page-extra-texts');
+          if (extra) {
+            record.container.insertBefore(record.node, extra);
+            continue;
+          }
+        }
         record.container.appendChild(record.node);
       }
     }
@@ -68,18 +81,41 @@ export function syncCoverPageHeight(book: HTMLElement): number {
   const stage = book.closest<HTMLElement>('.mag-stage');
   stage?.style.removeProperty('--mag-page-h');
 
-  const wasHidden = cover.hidden;
+  const visibleOthers = Array.from(book.querySelectorAll<HTMLElement>('[data-mag-page]')).filter(
+    (el) => el !== cover && !el.hidden,
+  );
+  visibleOthers.forEach((el) => {
+    el.hidden = true;
+  });
+
+  const wasCoverHidden = cover.hidden;
   cover.hidden = false;
   cover.dataset.magMeasuring = 'true';
   book.classList.add('is-paginating');
 
   const rectHeight = cover.getBoundingClientRect?.().height ?? 0;
   const rawHeight = rectHeight > 0 ? rectHeight : cover.clientHeight;
-  const measured = Math.floor(rawHeight);
+  let measured = Math.floor(rawHeight);
+
+  if (stage && typeof getComputedStyle === 'function') {
+    const stageRect = stage.getBoundingClientRect?.();
+    if (stageRect && stageRect.height > 0) {
+      const stStyle = getComputedStyle(stage);
+      const padTop = parseFloat(stStyle.paddingTop || '0') || 0;
+      const padBottom = parseFloat(stStyle.paddingBottom || '0') || 0;
+      const stageInner = Math.floor(stageRect.height - padTop - padBottom);
+      if (stageInner > 100 && (measured <= 0 || measured > stageInner)) {
+        measured = stageInner;
+      }
+    }
+  }
 
   delete cover.dataset.magMeasuring;
   book.classList.remove('is-paginating');
-  cover.hidden = wasHidden;
+  cover.hidden = wasCoverHidden;
+  visibleOthers.forEach((el) => {
+    el.hidden = false;
+  });
 
   if (measured > 0) {
     book.style.setProperty('--mag-page-h', `${measured}px`);
@@ -94,46 +130,71 @@ function pageOverflowsHeight(pageEl: HTMLElement, targetHeight: number): boolean
   const canvas = pageEl.querySelector<HTMLElement>('.mag-spread-canvas') ?? pageEl;
   const canvasClient = canvas.clientHeight > 0 ? canvas.clientHeight : targetHeight;
   const maxAllowed = Math.min(targetHeight, canvasClient);
-  return pageEl.scrollHeight > targetHeight + 2 || canvas.scrollHeight > maxAllowed + 2;
+  if (pageEl.scrollHeight > targetHeight + 2 || canvas.scrollHeight > maxAllowed + 2) {
+    return true;
+  }
+
+  const pageRect = pageEl.getBoundingClientRect?.();
+  if (pageRect && pageRect.height > 0) {
+    const limitBottom = pageRect.top + targetHeight - 1;
+    const visualEls = pageEl.querySelectorAll<HTMLElement>(
+      '.mag-photo-figure, .case-card, .event-card, .service-card, .faq-item, .custom-text-card, .custom-ref-card, .mag-extra-article, .mag-note-box, .mag-right-dossier, .mag-ref-mini-trio, .quote-block, .brief-form > *, .mag-folio-oval',
+    );
+    for (const item of visualEls) {
+      if (item.hidden || typeof item.getBoundingClientRect !== 'function') continue;
+      const r = item.getBoundingClientRect();
+      if (r && r.height > 0 && r.bottom > limitBottom) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
-function findSplittableSource(pageEl: HTMLElement): HTMLElement | null {
-  for (const selector of SPLITTABLE_SELECTORS) {
-    const candidates = Array.from(pageEl.querySelectorAll<HTMLElement>(selector));
+interface SplittablePick {
+  source: HTMLElement;
+  minKeep: number;
+}
+
+function findSplittableSource(pageEl: HTMLElement, allowLastCardOverflow = false): SplittablePick | null {
+  const effectiveRules: SplittableRule[] = allowLastCardOverflow
+    ? PRIMARY_SPLIT_RULES.map((rule) =>
+        rule.selector === '.brief-form' ? rule : { selector: rule.selector, minKeep: 0 },
+      )
+    : PRIMARY_SPLIT_RULES;
+
+  for (const rule of effectiveRules) {
+    const candidates = Array.from(pageEl.querySelectorAll<HTMLElement>(rule.selector));
     for (let i = candidates.length - 1; i >= 0; i--) {
       const candidate = candidates[i];
-      const children = Array.from(candidate.children).filter(
-        (child): child is HTMLElement => child instanceof HTMLElement && !child.hidden,
-      );
-      if (children.length > 1 || (selector === '.brief-form' && children.length >= 1)) {
-        return candidate;
+      const children = getMovableChildren(candidate);
+      if (children.length > rule.minKeep) {
+        return { source: candidate, minKeep: rule.minKeep };
       }
     }
   }
 
   const leftStage = pageEl.querySelector<HTMLElement>('.mag-ref-left-stage');
   if (leftStage) {
-    const proseCopies = Array.from(leftStage.children).filter(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement &&
-        !child.hidden &&
-        (child.classList.contains('mag-zine-copy') || child.classList.contains('quote-block')),
-    );
-    if (proseCopies.length > 1) {
-      return leftStage;
+    const proseCopies = getMovableChildren(leftStage);
+    if (proseCopies.length > 0) {
+      return { source: leftStage, minKeep: 0 };
     }
   }
 
   const rightCol = pageEl.querySelector<HTMLElement>('.mag-ref-right-col');
   if (rightCol) {
-    const cards = Array.from(rightCol.children).filter(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement &&
-        !child.hidden &&
-        !child.classList.contains('mag-ref-mini-trio'),
-    );
+    const cards = getMovableChildren(rightCol);
     if (cards.length > 0) {
-      return rightCol;
+      return { source: rightCol, minKeep: 0 };
+    }
+  }
+
+  if (!allowLastCardOverflow) {
+    const hasHeading = pageEl.querySelector('.mag-zine-head') !== null;
+    if (hasHeading) {
+      return findSplittableSource(pageEl, true);
     }
   }
 
@@ -150,12 +211,12 @@ function getMovableChildren(source: HTMLElement): HTMLElement[] {
     );
   }
   if (source.classList.contains('mag-ref-right-col')) {
-    return Array.from(source.children).filter(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement &&
-        !child.hidden &&
-        !child.classList.contains('mag-ref-mini-trio'),
+    const all = Array.from(source.children).filter(
+      (child): child is HTMLElement => child instanceof HTMLElement && !child.hidden,
     );
+    // Move note/dossier cards before mini-trio
+    const nonTrio = all.filter((el) => !el.classList.contains('mag-ref-mini-trio'));
+    return nonTrio.length > 0 ? nonTrio : all;
   }
   return Array.from(source.children).filter(
     (child): child is HTMLElement => child instanceof HTMLElement && !child.hidden,
@@ -286,20 +347,19 @@ export function paginateBookToCoverHeight(book: HTMLElement): number {
         const popped: { container: HTMLElement; node: HTMLElement; addedFormAttr: boolean }[] = [];
         let guard = 0;
 
-        while (pageOverflowsHeight(currentEl, targetHeight) && guard < 60) {
+        while (pageOverflowsHeight(currentEl, targetHeight) && guard < 80) {
           guard += 1;
-          const source = findSplittableSource(currentEl);
-          if (!source) break;
+          const pick = findSplittableSource(currentEl);
+          if (!pick) break;
 
-          const movable = getMovableChildren(source);
-          const minKeep = source.classList.contains('mag-ref-right-col') ? 0 : 1;
-          if (movable.length <= minKeep) break;
+          const movable = getMovableChildren(pick.source);
+          if (movable.length <= pick.minKeep) break;
 
           const lastChild = movable[movable.length - 1];
           const originalContainer =
-            state.movedItems.find((item) => item.node === lastChild)?.container ?? source;
+            state.movedItems.find((item) => item.node === lastChild)?.container ?? pick.source;
           const isFormNode =
-            source.id === 'brief-form' || Boolean(lastChild.closest('#brief-form'));
+            pick.source.id === 'brief-form' || Boolean(lastChild.closest('#brief-form'));
           const addedFormAttr = isFormNode ? linkMovedFormControls(lastChild, 'brief-form') : false;
 
           lastChild.remove();
@@ -320,14 +380,44 @@ export function paginateBookToCoverHeight(book: HTMLElement): number {
         // Restore ascending DOM order for moved items
         const ordered = popped.reverse();
         const contArticle = createContinuationArticle(basePage, contSeq);
+        const contSheet = contArticle.querySelector<HTMLElement>('.mag-ref-sheet');
         const contStage = contArticle.querySelector<HTMLElement>('.mag-ref-left-stage');
+        const contHead = contStage?.querySelector<HTMLElement>('.mag-zine-head') ?? null;
 
-        // Group consecutive moved nodes sharing the same original container type cleanly
+        let contPhotos: HTMLElement | null = null;
+        let contRightCol: HTMLElement | null = null;
         let activeDest: HTMLElement | null = null;
         let activeDestKey = '';
 
         for (const item of ordered) {
           state.movedItems.push(item);
+
+          if (item.container.classList.contains('mag-ref-photos')) {
+            if (!contPhotos) {
+              contPhotos = document.createElement('div');
+              contPhotos.className = 'mag-ref-photos';
+              contArticle.classList.remove('no-photos');
+              if (contHead) {
+                contHead.insertAdjacentElement('beforebegin', contPhotos);
+              } else {
+                contStage?.prepend(contPhotos);
+              }
+            }
+            contPhotos.append(item.node);
+            continue;
+          }
+
+          if (item.container.classList.contains('mag-ref-right-col')) {
+            if (!contRightCol) {
+              contRightCol = document.createElement('aside');
+              contRightCol.className = 'mag-ref-right-col';
+              if (contStage) contStage.style.removeProperty('grid-column');
+              contSheet?.append(contRightCol);
+            }
+            contRightCol.append(item.node);
+            continue;
+          }
+
           const key = item.container.id || item.container.className;
           if (!activeDest || key !== activeDestKey) {
             activeDest = createDestinationContainerForSource(item.container);

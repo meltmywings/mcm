@@ -1311,11 +1311,21 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia(DOUBLE_SPREAD_QUERY)
       : null;
+  let pendingReflowAfterTurn = false;
+
   const handleViewportChange = () => {
+    if (book.classList.contains('is-curling')) {
+      pendingReflowAfterTurn = true;
+      return;
+    }
     reflowMagazinePages(true);
   };
   const handleViewportResizeCheck = () => {
     if (isRepaginating) return;
+    if (book.classList.contains('is-curling')) {
+      pendingReflowAfterTurn = true;
+      return;
+    }
     const sig = getLayoutSignature();
     if (sig !== lastLayoutSignature) {
       reflowMagazinePages(true);
@@ -1328,6 +1338,27 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   };
   const handleContentUpdated = () => {
     reflowMagazinePages(true);
+  };
+  const handleImageLoad = (e: Event) => {
+    if (isRepaginating) return;
+    const target = e.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    if (book.classList.contains('is-curling') || activeSkipToken !== 0 || pendingSettleFinish !== null) {
+      pendingReflowAfterTurn = true;
+      return;
+    }
+    reflowMagazinePages(true);
+  };
+  const handleTransitionEnd = () => {
+    if (
+      pendingReflowAfterTurn &&
+      !book.classList.contains('is-curling') &&
+      activeSkipToken === 0 &&
+      pendingSettleFinish === null
+    ) {
+      pendingReflowAfterTurn = false;
+      reflowMagazinePages(true);
+    }
   };
   const chromeObserver =
     typeof ResizeObserver !== 'undefined'
@@ -1347,6 +1378,10 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   }
   spreadMql?.addEventListener?.('change', handleViewportChange);
 
+  book.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+    img.loading = 'eager';
+  });
+
   prevBtn?.addEventListener('click', handlePrev);
   nextBtn?.addEventListener('click', handleNext);
   dotsContainer?.addEventListener('click', handleDotsClick);
@@ -1354,7 +1389,8 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   book.addEventListener('click', handleGlossaryClick);
   book.addEventListener('mcm:before-content-update', handleBeforeContentUpdate);
   book.addEventListener('mcm:content-updated', handleContentUpdated);
-  book.addEventListener('load', handleContentUpdated, true);
+  book.addEventListener('load', handleImageLoad, true);
+  book.addEventListener('transitionend', handleTransitionEnd);
   glossaryDialog?.addEventListener('close', handleGlossaryClose);
   coverGlossaryBtn?.addEventListener('click', handleOpenGlossary);
   pagerGlossaryBtn?.addEventListener('click', handleOpenGlossary);
@@ -1397,7 +1433,8 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       book.removeEventListener('click', handleGlossaryClick);
       book.removeEventListener('mcm:before-content-update', handleBeforeContentUpdate);
       book.removeEventListener('mcm:content-updated', handleContentUpdated);
-      book.removeEventListener('load', handleContentUpdated, true);
+      book.removeEventListener('load', handleImageLoad, true);
+      book.removeEventListener('transitionend', handleTransitionEnd);
       glossaryDialog?.removeEventListener('close', handleGlossaryClose);
       coverGlossaryBtn?.removeEventListener('click', handleOpenGlossary);
       pagerGlossaryBtn?.removeEventListener('click', handleOpenGlossary);

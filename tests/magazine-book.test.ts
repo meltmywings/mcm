@@ -578,6 +578,68 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     ctrl.destroy();
   });
 
+  it('pushes overflowing sticker cutouts and right-column cards on page 5 to a continuation page when bounded by cover height', () => {
+    loadIndexDom();
+    vi.stubGlobal('requestAnimationFrame', undefined as unknown as typeof requestAnimationFrame);
+
+    const cover = document.getElementById('cover')!;
+    const book = document.getElementById('mag-book')!;
+    const work2 = document.getElementById('work-2')!;
+    const photosWrap = work2.querySelector<HTMLElement>('[data-page-photos="work-2"]')!;
+    const stickers = Array.from(photosWrap.querySelectorAll<HTMLElement>('.mag-photo-figure'));
+    const rightCards = Array.from(
+      work2.querySelectorAll<HTMLElement>('.mag-ref-right-col > .mag-right-dossier, .mag-ref-right-col > .mag-note-box'),
+    );
+
+    Object.defineProperty(cover, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 390, height: 560, top: 0, left: 0, right: 390, bottom: 560 }),
+    });
+    Object.defineProperty(book, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 390, height: 560, top: 0, left: 0, right: 390, bottom: 560 }),
+    });
+    Object.defineProperty(work2, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 390, height: 560, top: 0, left: 0, right: 390, bottom: 560 }),
+    });
+
+    // Simulate sticker cutouts #3 and #4 plus right-col note card extending beyond 560px cover height
+    stickers.forEach((fig, idx) => {
+      Object.defineProperty(fig, 'getBoundingClientRect', {
+        configurable: true,
+        value: () => {
+          if (fig.closest('#work-2')) {
+            const bottom = idx >= 2 ? 680 : 320;
+            return { width: 120, height: 180, top: bottom - 180, left: 0, right: 120, bottom };
+          }
+          return { width: 120, height: 180, top: 100, left: 0, right: 120, bottom: 280 };
+        },
+      });
+    });
+
+    rightCards.forEach((card) => {
+      Object.defineProperty(card, 'getBoundingClientRect', {
+        configurable: true,
+        value: () =>
+          card.closest('#work-2')
+            ? { width: 120, height: 140, top: 470, left: 240, right: 360, bottom: 610 }
+            : { width: 120, height: 140, top: 120, left: 240, right: 360, bottom: 260 },
+      });
+    });
+
+    const ctrl = initMagazineBook(document)!;
+    const pages = ctrl.getPages();
+    expect(pages.length).toBeGreaterThan(14);
+    expect(pages[5].id).toBe('work-2');
+    expect(pages[6].id).toBe('work-2--c1');
+    // Overflowing stickers & note box moved onto continuation page #work-2--c1
+    expect(pages[6].element.querySelectorAll('.mag-photo-figure').length).toBeGreaterThanOrEqual(2);
+    expect(pages[5].element.querySelectorAll('.mag-photo-figure').length).toBeLessThanOrEqual(2);
+
+    ctrl.destroy();
+  });
+
   it('updates magazine page photos and extra editorial text blocks dynamically from CMS data', () => {
     loadIndexDom();
     renderPagePhotos(document, {
