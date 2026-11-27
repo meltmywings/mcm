@@ -292,13 +292,14 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     const ctrl = initMagazineBook(document)!;
     const pages = ctrl.getPages();
 
-    // Cover is a single page centered even on wide displays
+    // Cover is a single page centered even on wide displays (using right-sheet 50% width so size stays constant)
     expect(book.classList.contains('is-double-spread')).toBe(true);
     expect(book.classList.contains('is-cover-spread-active')).toBe(true);
     expect(pages[0].element.hidden).toBe(false);
+    expect(pages[0].element.classList.contains('is-right-sheet')).toBe(true);
     expect(pages[1].element.hidden).toBe(true);
 
-    // Swipe forward from single cover -> opens two-page Glossary spread (pages 01 & 02 side-by-side)
+    // Mid-swipe opening Cover -> pre-renders Glossary 01 (verso flipping to Left) & Glossary 02 (underneath Right)
     const dispatchPointer = (type: string, clientX: number, clientY = 300) => {
       const evt = new Event(type, { bubbles: true, cancelable: true }) as unknown as PointerEvent;
       Object.defineProperty(evt, 'pointerId', { value: 9 });
@@ -310,7 +311,14 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     };
 
     dispatchPointer('pointerdown', 800, 320);
-    dispatchPointer('pointermove', 350, 320);
+    dispatchPointer('pointermove', 520, 320); // ~62% past spine midpoint: verso Glossary 01 swings left, Glossary 02 visible underneath right
+    expect(pages[0].element.classList.contains('is-flip-leaf-right')).toBe(true);
+    expect(pages[1].element.hidden).toBe(false);
+    expect(pages[1].element.classList.contains('is-flip-leaf-left')).toBe(true);
+    expect(pages[1].element.style.transform).toContain('rotateY(');
+    expect(pages[2].element.hidden).toBe(false);
+    expect(pages[2].element.classList.contains('is-static-right')).toBe(true);
+
     dispatchPointer('pointerup', 350, 320);
 
     expect(ctrl.getCurrentIndex()).toBe(1);
@@ -321,9 +329,15 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     expect(pages[1].element.classList.contains('is-left-sheet')).toBe(true);
     expect(pages[2].element.classList.contains('is-right-sheet')).toBe(true);
 
-    // Swipe forward from Glossary spread -> opens Chapter I spread (pages 03 & 04)
+    // Mid-swipe from Glossary [01 | 02] -> [03 | 04]: right page flips to become Left page (03), while 04 pre-renders underneath on Right
     dispatchPointer('pointerdown', 800, 320);
-    dispatchPointer('pointermove', 350, 320);
+    dispatchPointer('pointermove', 620, 320);
+    expect(pages[1].element.classList.contains('is-static-left')).toBe(true);
+    expect(pages[2].element.classList.contains('is-flip-leaf-right')).toBe(true);
+    expect(pages[3].element.hidden).toBe(false);
+    expect(pages[3].element.classList.contains('is-flip-leaf-left')).toBe(true);
+    expect(pages[4].element.hidden).toBe(false);
+    expect(pages[4].element.classList.contains('is-static-right')).toBe(true);
     dispatchPointer('pointerup', 350, 320);
     expect(ctrl.getCurrentIndex()).toBe(3);
     expect(pages[3].element.hidden).toBe(false);

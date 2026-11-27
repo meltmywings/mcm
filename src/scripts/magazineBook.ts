@@ -163,6 +163,26 @@ function renderChapterGroupNodes(
   });
 }
 
+interface DoubleFlipRig {
+  mode: 'double';
+  direction: 'forward' | 'backward';
+  fromAnchor: number;
+  toAnchor: number;
+  staticLeft: HTMLElement | null;
+  staticRight: HTMLElement | null;
+  flipFront: HTMLElement | null;
+  flipBack: HTMLElement | null;
+}
+
+interface SingleCurlRig {
+  mode: 'single';
+  direction: 'forward' | 'backward';
+  topEl: HTMLElement;
+  underEl: HTMLElement;
+}
+
+type ActiveTurnRig = DoubleFlipRig | SingleCurlRig;
+
 export function initMagazineBook(root: ParentNode = document): MagazineBookController | null {
   const book = root.querySelector<HTMLElement>('#mag-book');
   if (!book) return null;
@@ -200,12 +220,23 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     targetIndex: number;
     progress: number;
     doubleSpread: boolean;
-    topEls: HTMLElement[];
-    underEls: HTMLElement[];
+    rig: ActiveTurnRig | null;
     pages: MagazinePageMeta[];
   }
 
   let curlSession: CurlSession | null = null;
+
+  const preloadAdjacentImages = (pages: readonly MagazinePageMeta[], centerIdx: number) => {
+    const start = Math.max(0, centerIdx - 2);
+    const end = Math.min(pages.length - 1, centerIdx + 4);
+    for (let i = start; i <= end; i++) {
+      pages[i]?.element.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+        img.loading = 'eager';
+        img.decoding = 'sync';
+        img.decode?.().catch(() => {});
+      });
+    }
+  };
 
   const collectPages = (): MagazinePageMeta[] => {
     const rawPages = Array.from(book.querySelectorAll<HTMLElement>('[data-mag-page]')).filter(
@@ -260,7 +291,6 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     }
 
     if (glossarySpreadLeft && glossarySpreadRight) {
-      // Split chapters cleanly across the two-page Glossary opening spread
       const totalEntries = pages.length;
       const leftGroups: ChapterGroup[] = [];
       const rightGroups: ChapterGroup[] = [];
@@ -348,15 +378,17 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       const isVisible = visible.includes(i);
       p.element.hidden = !isVisible;
       p.element.classList.toggle('is-active-page', isVisible);
+      // Cover keeps identical 50% right-sheet geometry before/during opening so its size never jumps
       p.element.classList.toggle('is-left-sheet', doubleSpread && !isCover && i === visible[0]);
       p.element.classList.toggle(
         'is-right-sheet',
-        doubleSpread && !isCover && visible.length > 1 && i === visible[1],
+        doubleSpread && ((isCover && i === 0) || (!isCover && visible.length > 1 && i === visible[1])),
       );
     });
 
     currentIndex = anchor;
     renderPager(pages, visible);
+    preloadAdjacentImages(pages, anchor);
   };
 
   const clearCurlVisuals = () => {
@@ -367,6 +399,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     pendingSettleFinish = null;
     book.classList.remove('is-curling', 'is-curling-forward', 'is-curling-backward');
     book.style.removeProperty('--curl-p');
+    book.style.removeProperty('transform');
     if (curlFlapHost) {
       curlFlapHost.classList.remove('is-visible');
     }
@@ -375,16 +408,23 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       curlFlap.style.removeProperty('opacity');
     }
     book.querySelectorAll<HTMLElement>('[data-mag-page]').forEach((el) => {
-      el.classList.remove('is-curl-top', 'is-curl-underneath', 'is-left-sheet', 'is-right-sheet');
+      el.classList.remove(
+        'is-curl-top',
+        'is-curl-underneath',
+        'is-static-left',
+        'is-static-right',
+        'is-flip-leaf-right',
+        'is-flip-leaf-left',
+      );
       el.style.removeProperty('clip-path');
       el.style.removeProperty('transform');
       el.style.removeProperty('opacity');
       el.style.removeProperty('filter');
+      el.style.removeProperty('visibility');
+      el.style.removeProperty('z-index');
     });
   };
 
-  // Synchronously commit any in-flight curl settle before starting a new swipe or jump
-  // so rapid consecutive swipes advance page-by-page instead of cancelling the previous turn.
   const flushPendingSettle = () => {
     if (!pendingSettleFinish) {
       clearCurlVisuals();
@@ -395,73 +435,159 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     finish();
   };
 
-  const applyCurlProgress = (
-    topEls: HTMLElement[],
-    underEls: HTMLElement[],
+  const setupTurnRig = (
+    pages: MagazinePageMeta[],
+    fromAnchor: number,
+    toAnchor: number,
     direction: 'forward' | 'backward',
-    rawProgress: number,
-    touchYRatio = 0.78,
-  ) => {
+    doubleSpread: boolean,
+  ): ActiveTurnRig | null => {
+    if (!doubleSpread) {
+      const curEl = pages[fromAnchor]?.element;
+      const destEl = pages[toAnchor]?.element;
+      if (!curEl || !destEl) return null;
+
+      const topEl = direction === 'forward' ? curEl : destEl;
+      const underEl = direction === 'forward' ? destEl : curEl;
+      curEl.hidden = false;
+      destEl.hidden = false;
+      topEl.classList.add('is-curl-top');
+      underEl.classList.add('is-curl-underneath');
+
+      book.classList.add(
+        'is-curling',
+        direction === 'forward' ? 'is-curling-forward' : 'is-curling-backward',
+      );
+      return { mode: 'single', direction, topEl, underEl };
+    }
+
+    const fromIndices = getVisibleIndicesForAnchor(fromAnchor, pages.length, true);
+    const toIndices = getVisibleIndicesForAnchor(toAnchor, pages.length, true);
+
+    const fromLeftEl = fromAnchor > 0 ? pages[fromIndices[0]]?.element ?? null : null;
+    const fromRightEl =
+      fromAnchor === 0 ? pages[0]?.element ?? null : pages[fromIndices[1]]?.element ?? null;
+    const toLeftEl = toAnchor > 0 ? pages[toIndices[0]]?.element ?? null : null;
+    const toRightEl =
+      toAnchor === 0 ? pages[0]?.element ?? null : pages[toIndices[1]]?.element ?? null;
+
+    // Reveal every participating sheet immediately so next pages render live underneath before turn crosses spine
+    [fromLeftEl, fromRightEl, toLeftEl, toRightEl].forEach((el) => {
+      if (el) el.hidden = false;
+    });
+
+    if (direction === 'forward') {
+      // Right sheet flips over spine (0 -> -180deg) onto Left; nextLeft is its verso & nextRight is pre-rendered underneath!
+      fromLeftEl?.classList.add('is-static-left');
+      toRightEl?.classList.add('is-static-right');
+      fromRightEl?.classList.add('is-flip-leaf-right');
+      toLeftEl?.classList.add('is-flip-leaf-left');
+
+      book.classList.remove('is-cover-spread-active');
+      book.classList.add('is-curling', 'is-curling-forward');
+
+      return {
+        mode: 'double',
+        direction,
+        fromAnchor,
+        toAnchor,
+        staticLeft: fromLeftEl,
+        staticRight: toRightEl,
+        flipFront: fromRightEl,
+        flipBack: toLeftEl,
+      };
+    }
+
+    // Backward turn: Left sheet flips back over spine (0 -> +180deg) to Right; prevRight is its verso & prevLeft sits underneath
+    toLeftEl?.classList.add('is-static-left');
+    fromRightEl?.classList.add('is-static-right');
+    fromLeftEl?.classList.add('is-flip-leaf-left');
+    toRightEl?.classList.add('is-flip-leaf-right');
+
+    book.classList.remove('is-cover-spread-active');
+    book.classList.add('is-curling', 'is-curling-backward');
+
+    return {
+      mode: 'double',
+      direction,
+      fromAnchor,
+      toAnchor,
+      staticLeft: toLeftEl,
+      staticRight: fromRightEl,
+      flipFront: fromLeftEl,
+      flipBack: toRightEl,
+    };
+  };
+
+  const applyRigProgress = (rig: ActiveTurnRig, rawProgress: number, touchYRatio = 0.78) => {
     const p = clamp(rawProgress, 0, 1);
     book.style.setProperty('--curl-p', p.toFixed(4));
 
-    if (prefersReducedMotion()) {
-      const topOpacity = direction === 'forward' ? String(clamp(1 - p, 0, 1)) : String(p);
-      topEls.forEach((el) => {
-        el.style.opacity = topOpacity;
-      });
-      underEls.forEach((el) => {
-        el.style.opacity = '1';
-      });
+    if (rig.mode === 'single') {
+      if (prefersReducedMotion()) {
+        rig.topEl.style.opacity = rig.direction === 'forward' ? String(clamp(1 - p, 0, 1)) : String(p);
+        rig.underEl.style.opacity = '1';
+        return;
+      }
+
+      const curlRatio = rig.direction === 'forward' ? p : 1 - p;
+      const peelArc = Math.sin(curlRatio * Math.PI);
+      const bias = (touchYRatio - 0.5) * 38 * peelArc;
+      const creaseTop = clamp(100 - curlRatio * 124 + bias, -30, 100);
+      const creaseBot = clamp(100 - curlRatio * 124 - bias, -30, 100);
+
+      rig.topEl.style.clipPath = `polygon(0% 0%, ${creaseTop.toFixed(2)}% 0%, ${creaseBot.toFixed(2)}% 100%, 0% 100%)`;
+      rig.topEl.style.opacity = '1';
+
+      if (curlFlap && curlFlapHost) {
+        const flapWidth = clamp(peelArc * 30 + curlRatio * 6, 0, 32);
+        const topFlapX = clamp(creaseTop - flapWidth * (touchYRatio >= 0.5 ? 0.65 : 1.15), -35, 100);
+        const botFlapX = clamp(creaseBot - flapWidth * (touchYRatio >= 0.5 ? 1.15 : 0.65), -35, 100);
+        const showFlap = curlRatio > 0.005 && curlRatio < 0.995;
+        curlFlapHost.classList.toggle('is-visible', showFlap);
+        curlFlap.style.clipPath = `polygon(${topFlapX.toFixed(2)}% 0%, ${creaseTop.toFixed(2)}% 0%, ${creaseBot.toFixed(2)}% 100%, ${botFlapX.toFixed(2)}% 100%)`;
+        curlFlap.style.opacity = showFlap ? '1' : '0';
+      }
+
+      const underBrightness = 0.86 + (1 - curlRatio) * 0.14;
+      rig.underEl.style.filter = `brightness(${underBrightness.toFixed(3)})`;
+      rig.underEl.style.opacity = '1';
       return;
     }
 
-    const curlRatio = direction === 'forward' ? p : 1 - p;
-    const peelArc = Math.sin(curlRatio * Math.PI);
-    const bias = (touchYRatio - 0.5) * 38 * peelArc;
-    const creaseTop = clamp(100 - curlRatio * 124 + bias, -30, 100);
-    const creaseBot = clamp(100 - curlRatio * 124 - bias, -30, 100);
-
-    const hasSplitDoubleTop =
-      topEls.length > 0 && topEls.some((el) => el.classList.contains('is-left-sheet'));
-
-    if (hasSplitDoubleTop) {
-      const leftSheet = topEls.find((el) => el.classList.contains('is-left-sheet'));
-      const rightSheet = topEls.find((el) => el.classList.contains('is-right-sheet'));
-      if (leftSheet) {
-        const lTop = clamp(creaseTop * 2, 0, 100);
-        const lBot = clamp(creaseBot * 2, 0, 100);
-        leftSheet.style.clipPath = `polygon(0% 0%, ${lTop.toFixed(2)}% 0%, ${lBot.toFixed(2)}% 100%, 0% 100%)`;
-        leftSheet.style.opacity = '1';
-      }
-      if (rightSheet) {
-        const rTop = clamp((creaseTop - 50) * 2, 0, 100);
-        const rBot = clamp((creaseBot - 50) * 2, 0, 100);
-        rightSheet.style.clipPath = `polygon(0% 0%, ${rTop.toFixed(2)}% 0%, ${rBot.toFixed(2)}% 100%, 0% 100%)`;
-        rightSheet.style.opacity = '1';
-      }
+    // Physical Double-Spread 3D Leaf Turn (50% sheet geometry preserved throughout!)
+    if (rig.fromAnchor === 0 && rig.direction === 'forward') {
+      book.style.transform = `translateX(${(-25 * (1 - p)).toFixed(3)}%)`;
+    } else if (rig.toAnchor === 0 && rig.direction === 'backward') {
+      book.style.transform = `translateX(${(-25 * p).toFixed(3)}%)`;
     } else {
-      topEls.forEach((el) => {
-        el.style.clipPath = `polygon(0% 0%, ${creaseTop.toFixed(2)}% 0%, ${creaseBot.toFixed(2)}% 100%, 0% 100%)`;
-        el.style.opacity = '1';
-      });
+      book.style.transform = 'translateX(0%)';
     }
 
-    if (curlFlap && curlFlapHost) {
-      const flapWidth = clamp(peelArc * 30 + curlRatio * 6, 0, 32);
-      const topFlapX = clamp(creaseTop - flapWidth * (touchYRatio >= 0.5 ? 0.65 : 1.15), -35, 100);
-      const botFlapX = clamp(creaseBot - flapWidth * (touchYRatio >= 0.5 ? 1.15 : 0.65), -35, 100);
-      const showFlap = curlRatio > 0.005 && curlRatio < 0.995;
-      curlFlapHost.classList.toggle('is-visible', showFlap);
-      curlFlap.style.clipPath = `polygon(${topFlapX.toFixed(2)}% 0%, ${creaseTop.toFixed(2)}% 0%, ${creaseBot.toFixed(2)}% 100%, ${botFlapX.toFixed(2)}% 100%)`;
-      curlFlap.style.opacity = showFlap ? '1' : '0';
-    }
+    const frontVisible = p < 0.5;
+    const frontAngle = rig.direction === 'forward' ? -180 * p : 180 * p;
+    const backAngle = rig.direction === 'forward' ? 180 * (1 - p) : -180 * (1 - p);
 
-    const underBrightness = 0.86 + (1 - curlRatio) * 0.14;
-    underEls.forEach((el) => {
-      el.style.filter = `brightness(${underBrightness.toFixed(3)})`;
-      el.style.opacity = '1';
-    });
+    if (rig.flipFront) {
+      rig.flipFront.style.transform = `rotateY(${frontAngle.toFixed(2)}deg)`;
+      rig.flipFront.style.visibility = frontVisible ? 'visible' : 'hidden';
+      rig.flipFront.style.zIndex = frontVisible ? '5' : '1';
+      rig.flipFront.style.filter = `brightness(${(1 - p * 0.14).toFixed(3)})`;
+    }
+    if (rig.flipBack) {
+      rig.flipBack.style.transform = `rotateY(${backAngle.toFixed(2)}deg)`;
+      rig.flipBack.style.visibility = !frontVisible ? 'visible' : 'hidden';
+      rig.flipBack.style.zIndex = !frontVisible ? '5' : '1';
+      rig.flipBack.style.filter = `brightness(${(0.88 + p * 0.12).toFixed(3)})`;
+    }
+    if (rig.staticLeft) {
+      rig.staticLeft.style.zIndex = '1';
+      rig.staticLeft.style.visibility = 'visible';
+    }
+    if (rig.staticRight) {
+      rig.staticRight.style.zIndex = '1';
+      rig.staticRight.style.visibility = 'visible';
+    }
   };
 
   const focusPageHeading = (el: HTMLElement | undefined) => {
@@ -469,15 +595,14 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     heading?.focus?.({ preventScroll: true });
   };
 
-  const finalizeCurlSettle = (
+  const finalizeTurnSettle = (
     pages: MagazinePageMeta[],
-    direction: 'forward' | 'backward',
+    rig: ActiveTurnRig,
     startP: number,
     endP: number,
-    topEls: HTMLElement[],
-    underEls: HTMLElement[],
     commitIndex: number | null,
     touchYRatio = 0.78,
+    duration = 160,
   ) => {
     const finish = () => {
       clearCurlVisuals();
@@ -502,14 +627,13 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     }
 
     pendingSettleFinish = finish;
-    const duration = 150;
     const startTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
     const step = (now: number) => {
       if (pendingSettleFinish !== finish) return;
       const elapsed = Math.min(1, Math.max(0, (now - startTime) / duration));
       const eased = 1 - Math.pow(1 - elapsed, 3);
       const currentP = startP + (endP - startP) * eased;
-      applyCurlProgress(topEls, underEls, direction, currentP, touchYRatio);
+      applyRigProgress(rig, currentP, touchYRatio);
       if (elapsed < 1) {
         settleRafId = requestAnimationFrame(step);
       } else {
@@ -539,14 +663,29 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
 
     const doubleSpread = isDoubleSpreadViewport();
     const anchor = snapToSpreadAnchor(targetIndex, pages.length, doubleSpread);
-    if (
-      anchor === currentIndex &&
-      pages[anchor]?.element.classList.contains('is-active-page')
-    ) {
+    if (anchor === currentIndex && pages[anchor]?.element.classList.contains('is-active-page')) {
       return;
     }
 
     const direction: 'forward' | 'backward' = anchor >= currentIndex ? 'forward' : 'backward';
+
+    // On wide displays with animation frame support, adjacent turns play the real physical 3D spine leaf turn
+    const adjForward = getAdjacentAnchor(currentIndex, 'forward', pages.length, true);
+    const adjBackward = getAdjacentAnchor(currentIndex, 'backward', pages.length, true);
+    if (
+      doubleSpread &&
+      !prefersReducedMotion() &&
+      typeof requestAnimationFrame === 'function' &&
+      (anchor === adjForward || anchor === adjBackward)
+    ) {
+      const rig = setupTurnRig(pages, currentIndex, anchor, direction, true);
+      if (rig) {
+        applyRigProgress(rig, 0, 0.5);
+        finalizeTurnSettle(pages, rig, 0, 1, anchor, 0.5, 300);
+        return;
+      }
+    }
+
     const scopedBook = book as HTMLElement & {
       startViewTransition?: (opts: { update: () => void; types?: string[] } | (() => void)) => {
         ready?: Promise<void>;
@@ -757,8 +896,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       targetIndex: currentIndex,
       progress: 0,
       doubleSpread: isDoubleSpreadViewport(),
-      topEls: [],
-      underEls: [],
+      rig: null,
       pages,
     };
   };
@@ -792,46 +930,14 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
         return;
       }
 
-      const curGroupIndices = getVisibleIndicesForAnchor(
+      const rig = setupTurnRig(
+        curlSession.pages,
         currentIndex,
-        curlSession.pages.length,
-        curlSession.doubleSpread,
-      );
-      const destGroupIndices = getVisibleIndicesForAnchor(
         targetIndex,
-        curlSession.pages.length,
+        direction,
         curlSession.doubleSpread,
       );
-
-      const assignSheetSides = (indices: number[], cls: string): HTMLElement[] => {
-        const anchor = indices[0] ?? 0;
-        const els: HTMLElement[] = [];
-        indices.forEach((idx, pos) => {
-          const el = curlSession!.pages[idx]?.element;
-          if (!el) return;
-          el.hidden = false;
-          el.classList.add(cls);
-          if (curlSession!.doubleSpread && anchor > 0) {
-            el.classList.toggle('is-left-sheet', pos === 0);
-            el.classList.toggle('is-right-sheet', pos === 1);
-          } else {
-            el.classList.remove('is-left-sheet', 'is-right-sheet');
-          }
-          els.push(el);
-        });
-        return els;
-      };
-
-      const curEls = assignSheetSides(
-        curGroupIndices,
-        direction === 'forward' ? 'is-curl-top' : 'is-curl-underneath',
-      );
-      const destEls = assignSheetSides(
-        destGroupIndices,
-        direction === 'forward' ? 'is-curl-underneath' : 'is-curl-top',
-      );
-
-      if (curEls.length === 0 || destEls.length === 0) {
+      if (!rig) {
         curlSession = null;
         return;
       }
@@ -839,39 +945,21 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       curlSession.locked = 'horizontal';
       curlSession.direction = direction;
       curlSession.targetIndex = targetIndex;
-      curlSession.topEls = direction === 'forward' ? curEls : destEls;
-      curlSession.underEls = direction === 'forward' ? destEls : curEls;
-
-      book.classList.remove('is-cover-spread-active');
-      book.classList.add(
-        'is-curling',
-        direction === 'forward' ? 'is-curling-forward' : 'is-curling-backward',
-      );
+      curlSession.rig = rig;
       book.setPointerCapture?.(e.pointerId);
     }
 
-    if (
-      curlSession.locked === 'horizontal' &&
-      curlSession.direction &&
-      curlSession.topEls.length > 0 &&
-      curlSession.underEls.length > 0
-    ) {
+    if (curlSession.locked === 'horizontal' && curlSession.direction && curlSession.rig) {
       const rect = book.getBoundingClientRect();
       const bookWidth = Math.max(280, rect.width || 390);
       if (rect.height > 0) {
         curlSession.touchYRatio = clamp((e.clientY - rect.top) / rect.height, 0.12, 0.88);
       }
       const directionalDelta = curlSession.direction === 'forward' ? -dx : dx;
-      const dragSpan = curlSession.doubleSpread ? bookWidth * 0.52 : bookWidth * 0.7;
+      const dragSpan = curlSession.doubleSpread ? bookWidth * 0.45 : bookWidth * 0.7;
       const progress = clamp(directionalDelta / dragSpan, 0, 1);
       curlSession.progress = progress;
-      applyCurlProgress(
-        curlSession.topEls,
-        curlSession.underEls,
-        curlSession.direction,
-        progress,
-        curlSession.touchYRatio,
-      );
+      applyRigProgress(curlSession.rig, progress, curlSession.touchYRatio);
     }
   };
 
@@ -910,12 +998,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       return;
     }
 
-    if (
-      session.locked !== 'horizontal' ||
-      !session.direction ||
-      session.topEls.length === 0 ||
-      session.underEls.length === 0
-    ) {
+    if (session.locked !== 'horizontal' || !session.direction || !session.rig) {
       return;
     }
 
@@ -930,13 +1013,11 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       ? session.progress >= 0.24 || directionalVelocity >= 0.35
       : session.progress >= 0.35;
 
-    finalizeCurlSettle(
+    finalizeTurnSettle(
       session.pages,
-      session.direction,
+      session.rig,
       session.progress,
       shouldCommit ? 1 : 0,
-      session.topEls,
-      session.underEls,
       shouldCommit ? session.targetIndex : null,
       session.touchYRatio,
     );

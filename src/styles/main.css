@@ -285,21 +285,33 @@ body {
   display: none;
 }
 
-/* Wide Display Double-Sheet Spread (Cover stays Single Sheet; Glossary 01–02 & Interior Pages open Side by Side) */
+/* Wide Display Double-Sheet Spread (Cover keeps identical single-page size & flips to Left; Interior pages pre-render underneath) */
 @media (min-width: 56rem) {
+  .mag-stage {
+    perspective: 2400px;
+  }
+
   #mag-book.is-double-spread {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
     max-width: min(96vw, 70rem);
-    background: #ffffff;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    transform-style: preserve-3d;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #mag-book.is-double-spread.is-curling {
+    transition: none;
   }
 
   #mag-book.is-double-spread.is-cover-spread-active:not(.is-curling) {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: min(50vw, 35rem);
+    transform: translateX(-25%);
   }
 
-  #mag-book.is-double-spread:not(.is-cover-spread-active)::after {
+  #mag-book.is-double-spread:not(.is-cover-spread-active):not(.is-curling)::after {
     content: '';
     position: absolute;
     inset-block: 0;
@@ -318,6 +330,10 @@ body {
     z-index: 6;
   }
 
+  #mag-book.is-double-spread .mag-page {
+    box-shadow: 0 20px 44px rgba(24, 14, 20, 0.24);
+  }
+
   #mag-book.is-double-spread .mag-page.is-left-sheet {
     grid-column: 1;
   }
@@ -326,56 +342,48 @@ body {
     grid-column: 2;
   }
 
-  #mag-book.is-double-spread.is-curling .mag-page.is-curl-underneath.is-left-sheet {
+  #mag-book.is-double-spread.is-curling .mag-curl-flap-host {
+    display: none;
+  }
+
+  #mag-book.is-double-spread.is-curling .mag-page.is-static-left {
     position: absolute;
     inset-block: 0;
     left: 0;
     width: 50%;
-    z-index: 2;
+    z-index: 1;
     overflow: hidden;
   }
 
-  #mag-book.is-double-spread.is-curling .mag-page.is-curl-underneath.is-right-sheet {
+  #mag-book.is-double-spread.is-curling .mag-page.is-static-right {
     position: absolute;
     inset-block: 0;
     left: 50%;
     width: 50%;
-    z-index: 2;
+    z-index: 1;
     overflow: hidden;
   }
 
-  #mag-book.is-double-spread.is-curling .mag-page.is-curl-top.is-left-sheet {
+  #mag-book.is-double-spread.is-curling .mag-page.is-flip-leaf-right {
+    position: absolute;
+    inset-block: 0;
+    left: 50%;
+    width: 50%;
+    transform-origin: left center;
+    backface-visibility: hidden;
+    overflow: hidden;
+    will-change: transform, filter;
+  }
+
+  #mag-book.is-double-spread.is-curling .mag-page.is-flip-leaf-left {
     position: absolute;
     inset-block: 0;
     left: 0;
     width: 50%;
-    z-index: 5;
+    transform-origin: right center;
+    backface-visibility: hidden;
     overflow: hidden;
-  }
-
-  #mag-book.is-double-spread.is-curling .mag-page.is-curl-top.is-right-sheet {
-    position: absolute;
-    inset-block: 0;
-    left: 50%;
-    width: 50%;
-    z-index: 5;
-    overflow: hidden;
-  }
-
-  #mag-book.is-double-spread.is-curling .mag-page.is-curl-top:not(.is-left-sheet):not(.is-right-sheet) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    z-index: 5;
-    overflow: hidden;
-  }
-
-  #mag-book.is-double-spread.is-curling .mag-page.is-curl-underneath:not(.is-left-sheet):not(.is-right-sheet) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    z-index: 2;
-    overflow: hidden;
+    will-change: transform, filter;
   }
 }
 
