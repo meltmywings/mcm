@@ -2,7 +2,6 @@ import {
   balanceGlossarySpreads,
   paginateBookToCoverHeight,
   restorePaginatedFlow,
-  syncCoverPageHeight,
 } from './magazinePaginator';
 
 export interface MagazinePageMeta {
@@ -552,7 +551,6 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     renderPager(pages, visible);
     preloadAdjacentImages(pages, anchor);
     syncChromeHeights();
-    syncCoverPageHeight(book);
   };
 
   const reflowMagazinePages = (preservePosition = true) => {
@@ -1343,6 +1341,11 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     if (isRepaginating) return;
     const target = e.target;
     if (!(target instanceof HTMLImageElement)) return;
+    // Built-in cutout stickers already carry intrinsic width/height and never change layout after load
+    if (target.hasAttribute('width') && target.hasAttribute('height')) return;
+    const hostPage = target.closest<HTMLElement>('[data-mag-page]');
+    // Never yank content or adjust height while the user is viewing an inner page
+    if (currentIndex > 0 && hostPage && !hostPage.hidden) return;
     if (book.classList.contains('is-curling') || activeSkipToken !== 0 || pendingSettleFinish !== null) {
       pendingReflowAfterTurn = true;
       return;
@@ -1366,12 +1369,13 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
           handleViewportResizeCheck();
         })
       : null;
+  const stageChrome = book.closest<HTMLElement>('.mag-stage');
   const headerChrome = root.querySelector<HTMLElement>('.site-header');
   const pagerChrome = root.querySelector<HTMLElement>('.mag-pager');
   if (chromeObserver) {
     if (headerChrome) chromeObserver.observe(headerChrome);
     if (pagerChrome) chromeObserver.observe(pagerChrome);
-    chromeObserver.observe(book);
+    if (stageChrome) chromeObserver.observe(stageChrome);
   }
   if (typeof window !== 'undefined') {
     window.addEventListener?.('resize', handleViewportChange);

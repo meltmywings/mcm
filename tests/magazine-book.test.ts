@@ -640,6 +640,61 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     ctrl.destroy();
   });
 
+  it('keeps active inner page locked during navigation and ignores mid-visit image loads on visible pages', () => {
+    loadIndexDom();
+    vi.stubGlobal('requestAnimationFrame', undefined as unknown as typeof requestAnimationFrame);
+
+    const cover = document.getElementById('cover')!;
+    const book = document.getElementById('mag-book')!;
+    let coverHeightCalls = 0;
+    Object.defineProperty(cover, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => {
+        coverHeightCalls += 1;
+        return { width: 390, height: 600, top: 0, left: 0, right: 390, bottom: 600 };
+      },
+    });
+    Object.defineProperty(book, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 390, height: 600, top: 0, left: 0, right: 390, bottom: 600 }),
+    });
+
+    const ctrl = initMagazineBook(document)!;
+    const initialMeasureCount = coverHeightCalls;
+    ctrl.goToPage(5);
+    // Turning to Page 5 must NOT re-measure Cover or strip --mag-page-h
+    expect(coverHeightCalls).toBe(initialMeasureCount);
+    expect(book.style.getPropertyValue('--mag-page-h')).toBe('600px');
+
+    // Passive image load event on active visible Page 5 must NOT trigger reflow
+    const img = document.querySelector<HTMLImageElement>('#work-2 .mag-photo-img')!;
+    img.dispatchEvent(new Event('load', { bubbles: false }));
+    expect(coverHeightCalls).toBe(initialMeasureCount);
+    expect(ctrl.getCurrentIndex()).toBe(5);
+
+    ctrl.destroy();
+  });
+
+  it('replaces and removes both floating page stickers and sidebar note-box stickers via renderPagePhotos', () => {
+    loadIndexDom();
+    renderPagePhotos(document, {
+      work: [{ id: 's1', src: '/magazines/cutouts/mag-12.png', caption: 'New Sticker' }],
+      'note-work': [{ id: 'nw1', src: '/magazines/cutouts/mag-01.png', caption: 'Replaced Note Sticker' }],
+      'note-events': [],
+    });
+
+    const workImgs = document.querySelectorAll<HTMLImageElement>('#work [data-page-photos="work"] .mag-photo-img');
+    expect(workImgs).toHaveLength(1);
+    expect(workImgs[0].getAttribute('src')).toBe('/magazines/cutouts/mag-12.png');
+
+    const workNoteCutout = document.querySelector<HTMLImageElement>('[data-page-note-cutout="work"]')!;
+    expect(workNoteCutout.hidden).toBe(false);
+    expect(workNoteCutout.getAttribute('src')).toBe('/magazines/cutouts/mag-01.png');
+
+    const eventsNoteCutout = document.querySelector<HTMLImageElement>('[data-page-note-cutout="events"]')!;
+    expect(eventsNoteCutout.hidden).toBe(true);
+  });
+
   it('updates magazine page photos and extra editorial text blocks dynamically from CMS data', () => {
     loadIndexDom();
     renderPagePhotos(document, {

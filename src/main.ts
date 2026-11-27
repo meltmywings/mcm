@@ -5,8 +5,11 @@ import {
   DEFAULT_HERO_BUTTONS,
   DEFAULT_PAGE_PHOTOS,
   DEFAULT_PAGE_TEXT_BLOCKS,
+  DEFAULT_SITE_CONTENT,
+  FAQ_ITEMS,
   PROCESS_STEPS,
   SERVICE_PILLARS,
+  TICKER_ITEMS,
   type BuiltinSectionKey,
   type CampaignEvent,
   type CaseStudy,
@@ -78,58 +81,88 @@ async function hydrateFromCms(
       pageTextBlocks?: Record<string, PageTextBlock[]>;
     };
 
-    if (Array.isArray(data.heroButtons)) {
+    let layoutChanged = false;
+    const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+    if (Array.isArray(data.heroButtons) && !sameJson(data.heroButtons, DEFAULT_HERO_BUTTONS)) {
       renderHeroButtons(root.querySelector('#hero-actions'), data.heroButtons);
+      layoutChanged = true;
     }
-    if (data.siteContent) applySiteContent(root, data.siteContent);
-    if (Array.isArray(data.metrics)) {
+    if (data.siteContent && !sameJson({ ...DEFAULT_SITE_CONTENT, ...data.siteContent }, DEFAULT_SITE_CONTENT)) {
+      applySiteContent(root, data.siteContent);
+      layoutChanged = true;
+    }
+    if (Array.isArray(data.metrics) && !sameJson(data.metrics, AGENCY_METRICS)) {
       renderMetrics(root.querySelector('#metrics-list'), data.metrics);
+      layoutChanged = true;
     }
-    if (Array.isArray(data.tickerItems)) {
+    if (Array.isArray(data.tickerItems) && !sameJson(data.tickerItems, TICKER_ITEMS)) {
       renderTicker(root.querySelector('#ticker-track'), data.tickerItems);
+      layoutChanged = true;
     }
-    if (Array.isArray(data.caseStudies)) {
+    if (Array.isArray(data.caseStudies) && !sameJson(data.caseStudies, CASE_STUDIES)) {
       workController.updateStudies(data.caseStudies);
+      layoutChanged = true;
     }
-    if (Array.isArray(data.campaigns)) {
+    if (Array.isArray(data.campaigns) && !sameJson(data.campaigns, DEFAULT_CAMPAIGNS)) {
       renderCampaigns(root.querySelector('#events-grid'), data.campaigns);
+      layoutChanged = true;
     }
-    if (Array.isArray(data.services)) {
+    if (Array.isArray(data.services) && !sameJson(data.services, SERVICE_PILLARS)) {
       renderServices(
         root.querySelector('#services-grid'),
         data.services,
         root.querySelector<HTMLElement>('#services-grid-2'),
       );
+      layoutChanged = true;
     }
-    if (Array.isArray(data.processSteps)) {
+    if (Array.isArray(data.processSteps) && !sameJson(data.processSteps, PROCESS_STEPS)) {
       renderProcessSteps(root.querySelector('#process-grid'), data.processSteps);
+      layoutChanged = true;
     }
-    if (Array.isArray(data.faqs)) {
+    if (Array.isArray(data.faqs) && !sameJson(data.faqs, FAQ_ITEMS)) {
       initFaq(
         root.querySelector('#faq-list'),
         data.faqs,
         root.querySelector<HTMLElement>('#faq-list-2'),
       );
+      layoutChanged = true;
     }
-    if (Array.isArray(data.customSections)) {
+    if (Array.isArray(data.customSections) && data.customSections.length > 0) {
       renderCustomSections(
         root.querySelector('#custom-sections-root'),
         data.customSections,
         data.pagePhotos,
         data.pageTextBlocks,
       );
+      layoutChanged = true;
     }
-    if (data.pagePhotos) {
+    if (data.pagePhotos && !sameJson(data.pagePhotos, DEFAULT_PAGE_PHOTOS)) {
       renderPagePhotos(root, data.pagePhotos);
+      layoutChanged = true;
     }
-    if (data.pageTextBlocks) {
+    if (data.pageTextBlocks && !sameJson(data.pageTextBlocks, DEFAULT_PAGE_TEXT_BLOCKS)) {
       renderPageTextBlocks(root, data.pageTextBlocks);
+      layoutChanged = true;
     }
-    if (Array.isArray(data.hiddenSections)) {
+    if (Array.isArray(data.hiddenSections) && data.hiddenSections.length > 0) {
       applyHiddenSections(root, data.hiddenSections);
+      layoutChanged = true;
     }
 
-    bookController?.refresh();
+    if (layoutChanged) {
+      const decodeTasks = Array.from(root.querySelectorAll<HTMLImageElement>('#mag-book img')).map(
+        (img) => {
+          img.loading = 'eager';
+          return img.decode?.().catch(() => {}) ?? Promise.resolve();
+        },
+      );
+      await Promise.race([
+        Promise.allSettled(decodeTasks),
+        new Promise((resolve) => setTimeout(resolve, 250)),
+      ]);
+      bookController?.refresh();
+    }
   } catch {
     // Keep default seeded content when running offline
   }

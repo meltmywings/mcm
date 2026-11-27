@@ -358,6 +358,28 @@ export function renderPagePhotos(
       spread.classList.toggle('no-photos', figures.length === 0);
     }
   });
+
+  root.querySelectorAll<HTMLImageElement>('[data-page-note-cutout]').forEach((img) => {
+    const key = `note-${img.dataset.pageNoteCutout}`;
+    if (!Object.prototype.hasOwnProperty.call(pagePhotos, key)) return;
+    const item = pagePhotos[key]?.[0];
+    const clean = item ? safeImageSrc(item.src) : '';
+    if (!clean) {
+      img.hidden = true;
+      return;
+    }
+    img.hidden = false;
+    img.src = clean;
+    const dims = CUTOUT_DIMENSIONS[clean];
+    if (dims) {
+      img.width = dims[0];
+      img.height = dims[1];
+    } else {
+      img.removeAttribute('width');
+      img.removeAttribute('height');
+    }
+    img.style.shapeOutside = getCutoutShapeOutside(clean, 'right');
+  });
 }
 
 function buildTextBlockNode(block: PageTextBlock): HTMLElement {

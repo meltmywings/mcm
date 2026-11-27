@@ -61,13 +61,31 @@ const state: AdminCmsState = {
   submissions: [],
 };
 
-const EDITORIAL_ARCHIVE_PHOTOS: string[] = [
-  '/magazines/mag-01.jpg',
-  ...Array.from(
-    { length: 14 },
-    (_, idx) => `/magazines/cutouts/mag-${String(idx + 2).padStart(2, '0')}.png`,
-  ),
-];
+const EDITORIAL_CUTOUT_STICKERS: string[] = Array.from(
+  { length: 15 },
+  (_, idx) => `/magazines/cutouts/mag-${String(idx + 1).padStart(2, '0')}.png`,
+);
+
+const EDITORIAL_SHOOT_PHOTOS: string[] = Array.from(
+  { length: 15 },
+  (_, idx) => `/magazines/mag-${String(idx + 1).padStart(2, '0')}.jpg`,
+);
+
+const DEFAULT_NOTE_CUTOUTS: Record<string, string> = {
+  metrics: '/magazines/cutouts/mag-05.png',
+  work: '/magazines/cutouts/mag-06.png',
+  'work-2': '/magazines/cutouts/mag-10.png',
+  events: '/magazines/cutouts/mag-03.png',
+  services: '/magazines/cutouts/mag-09.png',
+  'services-2': '/magazines/cutouts/mag-08.png',
+  'culture-lab': '/magazines/cutouts/mag-13.png',
+  faq: '/magazines/cutouts/mag-06.png',
+  'faq-2': '/magazines/cutouts/mag-04.png',
+  brief: '/magazines/cutouts/mag-11.png',
+  directory: '/magazines/cutouts/mag-09.png',
+};
+
+const isCutoutStickerSrc = (src: string): boolean => src.includes('/cutouts/');
 
 const SECTION_LABELS: Record<BuiltinSectionKey, string> = {
   hero: 'Hero Showcase',
@@ -280,36 +298,47 @@ function openPhotoEditorDialog(
   if (!dialog || !titleEl || !fieldsContainer) return;
 
   titleEl.textContent = title;
-  const currentSrc = existing?.src || '/magazines/mag-01.jpg';
+  const currentSrc = existing?.src || '/magazines/cutouts/mag-05.png';
   const currentCaption = existing?.caption || '';
 
   fieldsContainer.innerHTML = `
     <div class="field">
-      <label for="ed-photo-file">Upload New Magazine Photo (JPG, PNG, WebP, GIF · max 4 MB)</label>
+      <label for="ed-photo-file">Upload New Image or Sticker (PNG cutout, JPG, WebP, GIF · max 4 MB)</label>
       <input type="file" id="ed-photo-file" accept="image/jpeg,image/png,image/webp,image/gif" />
       <p id="ed-photo-upload-status" class="preview-card-copy" hidden></p>
     </div>
     <div class="field">
-      <label>Or Choose from Editorial Shoot Archive</label>
+      <label>Choose Torn-Paper Cutout Sticker (15 Stickers)</label>
       <div class="photo-gallery-picker">
-        ${EDITORIAL_ARCHIVE_PHOTOS.map(
+        ${EDITORIAL_CUTOUT_STICKERS.map(
+          (src, idx) => `
+          <button type="button" class="photo-pick-btn ${currentSrc === src ? 'is-selected' : ''}" data-pick-src="${escapeAttr(src)}" title="Use Sticker ${idx + 1}">
+            <img src="${escapeAttr(src)}" alt="Cutout sticker ${idx + 1}" />
+          </button>`,
+        ).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Or Choose Editorial Shoot Photo (15 Photos)</label>
+      <div class="photo-gallery-picker">
+        ${EDITORIAL_SHOOT_PHOTOS.map(
           (src, idx) => `
           <button type="button" class="photo-pick-btn ${currentSrc === src ? 'is-selected' : ''}" data-pick-src="${escapeAttr(src)}" title="Use Shoot ${idx + 1}">
-            <img src="${escapeAttr(src)}" alt="Editorial archive ${idx + 1}" />
+            <img src="${escapeAttr(src)}" alt="Editorial photo ${idx + 1}" />
           </button>`,
         ).join('')}
       </div>
     </div>
     <div class="photo-dialog-preview-row">
-      <img id="ed-photo-preview" class="photo-dialog-preview" src="${escapeAttr(currentSrc)}" alt="Selected magazine photo preview" />
+      <img id="ed-photo-preview" class="photo-dialog-preview" src="${escapeAttr(currentSrc)}" alt="Selected magazine image or sticker preview" />
       <div class="field" style="flex:1;">
-        <label for="ed-field-src">Photo URL / Path</label>
-        <input type="text" id="ed-field-src" name="src" value="${escapeAttr(currentSrc)}" required placeholder="/magazines/mag-01.jpg" />
+        <label for="ed-field-src">Image or Sticker URL / Path</label>
+        <input type="text" id="ed-field-src" name="src" value="${escapeAttr(currentSrc)}" required placeholder="/magazines/cutouts/mag-05.png" />
       </div>
     </div>
     <div class="field">
-      <label for="ed-field-caption">Editorial Photo Caption (optional)</label>
-      <input type="text" id="ed-field-caption" name="caption" value="${escapeAttr(currentCaption)}" placeholder="e.g., Autumn Runway Feature" />
+      <label for="ed-field-caption">Label / Caption (optional)</label>
+      <input type="text" id="ed-field-caption" name="caption" value="${escapeAttr(currentCaption)}" placeholder="e.g., Runway Sticker or Autumn Feature" />
     </div>
   `;
 
@@ -378,9 +407,14 @@ function getEffectivePagePhotos(pageKey: string, customIdx = 0): MagazinePhoto[]
   if (Object.prototype.hasOwnProperty.call(state.pagePhotos, pageKey)) {
     return state.pagePhotos[pageKey] ?? [];
   }
+  if (pageKey.startsWith('note-')) {
+    const baseKey = pageKey.slice(5);
+    const noteSrc = DEFAULT_NOTE_CUTOUTS[baseKey];
+    return noteSrc ? [{ id: `default-${pageKey}`, src: noteSrc, caption: 'Sidebar Note Sticker' }] : [];
+  }
   if (pageKey.startsWith('custom-')) {
-    const src = EDITORIAL_ARCHIVE_PHOTOS[(customIdx + 7) % EDITORIAL_ARCHIVE_PHOTOS.length];
-    return [{ id: `default-${pageKey}`, src, caption: 'Editorial Feature' }];
+    const src = EDITORIAL_CUTOUT_STICKERS[(customIdx + 7) % EDITORIAL_CUTOUT_STICKERS.length];
+    return [{ id: `default-${pageKey}`, src, caption: 'Editorial Feature Sticker' }];
   }
   return DEFAULT_CMS_STATE.pagePhotos[pageKey] ?? [];
 }
@@ -392,13 +426,15 @@ function renderPageMediaAndTextStrip(
 ): string {
   const photos = getEffectivePagePhotos(pageKey, customIdx);
   const texts = state.pageTextBlocks[pageKey] ?? [];
+  const noteKey = `note-${pageKey}`;
+  const noteStickers = DEFAULT_NOTE_CUTOUTS[pageKey] ? getEffectivePagePhotos(noteKey, customIdx) : null;
 
   return `
     <div class="preview-media-strip">
       <div class="preview-media-col">
         <div class="preview-refs-head">
-          <span>Magazine Photos (${escapeHtml(pageLabel)})</span>
-          ${iconBtn('add', `Add photo to ${pageLabel}`, 'add-page-photo', { page: pageKey, 'c-idx': customIdx }, 'Photo')}
+          <span>Images &amp; Stickers (${escapeHtml(pageLabel)})</span>
+          ${iconBtn('add', `Add image or sticker to ${pageLabel}`, 'add-page-photo', { page: pageKey, 'c-idx': customIdx }, 'Sticker / Image')}
         </div>
         <div class="preview-photo-grid">
           ${
@@ -408,17 +444,52 @@ function renderPageMediaAndTextStrip(
             <div class="preview-photo-card">
               <img class="preview-photo-thumb" src="${escapeAttr(ph.src)}" alt="" />
               <div class="preview-photo-meta">
-                <span class="preview-card-copy">${escapeHtml(ph.caption || 'Editorial Photo')}</span>
+                <div>
+                  <span class="meta-pill">${isCutoutStickerSrc(ph.src) ? 'Sticker' : 'Image'}</span>
+                  <span class="preview-card-copy">${escapeHtml(ph.caption || 'Magazine Asset')}</span>
+                </div>
                 <div class="action-cluster">
-                  ${iconBtn('edit', `Edit photo on ${pageLabel}`, 'edit-page-photo', { page: pageKey, idx, 'c-idx': customIdx })}
-                  ${iconBtn('delete', `Remove photo from ${pageLabel}`, 'delete-page-photo', { page: pageKey, idx, 'c-idx': customIdx })}
+                  ${iconBtn('edit', `Replace image or sticker on ${pageLabel}`, 'edit-page-photo', { page: pageKey, idx, 'c-idx': customIdx }, 'Replace')}
+                  ${iconBtn('delete', `Remove image or sticker from ${pageLabel}`, 'delete-page-photo', { page: pageKey, idx, 'c-idx': customIdx }, 'Remove')}
                 </div>
               </div>
             </div>`,
               )
-              .join('') || '<p class="preview-card-copy">No photos on this page — click + Photo to add one.</p>'
+              .join('') || '<p class="preview-card-copy">No images or stickers on this page — click + Sticker / Image to add one.</p>'
           }
         </div>
+        ${
+          noteStickers !== null
+            ? `
+        <div class="preview-refs-head" style="margin-top:0.75rem;">
+          <span>Sidebar Note Box Sticker (${escapeHtml(pageLabel)})</span>
+          ${
+            noteStickers.length === 0
+              ? iconBtn('add', `Add sidebar note sticker to ${pageLabel}`, 'add-page-photo', { page: noteKey, 'c-idx': customIdx }, 'Note Sticker')
+              : ''
+          }
+        </div>
+        <div class="preview-photo-grid">
+          ${
+            noteStickers
+              .map(
+                (ph, idx) => `
+            <div class="preview-photo-card">
+              <img class="preview-photo-thumb" src="${escapeAttr(ph.src)}" alt="" />
+              <div class="preview-photo-meta">
+                <span class="meta-pill">Note Sticker</span>
+                <div class="action-cluster">
+                  ${iconBtn('edit', `Replace note sticker on ${pageLabel}`, 'edit-page-photo', { page: noteKey, idx, 'c-idx': customIdx }, 'Replace')}
+                  ${iconBtn('delete', `Remove note sticker from ${pageLabel}`, 'delete-page-photo', { page: noteKey, idx, 'c-idx': customIdx }, 'Remove')}
+                </div>
+              </div>
+            </div>`,
+              )
+              .join('') || '<p class="preview-card-copy">Sidebar note sticker removed — click + Note Sticker to restore or add one.</p>'
+          }
+        </div>`
+            : ''
+        }
       </div>
 
       <div class="preview-media-col">
@@ -946,7 +1017,7 @@ async function handleVisualEditorClick(target: HTMLElement): Promise<void> {
     const existing = idx >= 0 ? current[idx] : undefined;
 
     openPhotoEditorDialog(
-      existing ? 'Edit Magazine Photo' : 'Add Magazine Photo',
+      existing ? 'Replace Magazine Image / Sticker' : 'Add Magazine Image / Sticker',
       existing,
       async ({ src, caption }) => {
         const nextPhoto: MagazinePhoto = {
@@ -954,10 +1025,13 @@ async function handleVisualEditorClick(target: HTMLElement): Promise<void> {
           src,
           caption,
         };
-        const nextList =
-          idx >= 0 ? current.map((p, i) => (i === idx ? nextPhoto : p)) : [...current, nextPhoto];
+        const nextList = pageKey.startsWith('note-')
+          ? [nextPhoto]
+          : idx >= 0
+            ? current.map((p, i) => (i === idx ? nextPhoto : p))
+            : [...current, nextPhoto];
         const nextMap = { ...state.pagePhotos, [pageKey]: nextList };
-        await persistCmsPatch({ pagePhotos: nextMap }, 'Magazine photo saved.');
+        await persistCmsPatch({ pagePhotos: nextMap }, 'Magazine image / sticker saved.');
       },
     );
     return;
@@ -971,7 +1045,7 @@ async function handleVisualEditorClick(target: HTMLElement): Promise<void> {
     const current = getEffectivePagePhotos(pageKey, cIdx);
     const nextList = current.filter((_, i) => i !== idx);
     const nextMap = { ...state.pagePhotos, [pageKey]: nextList };
-    await persistCmsPatch({ pagePhotos: nextMap }, 'Magazine photo removed.');
+    await persistCmsPatch({ pagePhotos: nextMap }, 'Magazine image / sticker removed.');
     return;
   }
 

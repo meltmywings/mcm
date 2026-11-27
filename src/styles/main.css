@@ -1587,6 +1587,10 @@ body {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #5b5450;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 15rem;
 }
 
 .mag-page-dots {
@@ -1637,6 +1641,12 @@ body {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+}
+
+@media (min-width: 48rem) {
+  .mag-pager {
+    flex-wrap: nowrap;
+  }
 }
 
 @media (max-width: 48rem) {
