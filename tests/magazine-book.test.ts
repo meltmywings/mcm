@@ -544,6 +544,40 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     ctrl.destroy();
   });
 
+  it('activates double-page spread on foldable inner screens such as Pixel 10 Pro Fold', () => {
+    loadIndexDom();
+    const book = document.getElementById('mag-book')!;
+    // Simulate Pixel 10 Pro Fold inner display (~692x717 CSS px -> matches 37.5rem + 28rem, not 56rem)
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('37.5rem'),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    vi.stubGlobal('requestAnimationFrame', undefined as unknown as typeof requestAnimationFrame);
+    Object.defineProperty(book, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 692, height: 610, top: 54, left: 0, right: 692, bottom: 664 }),
+    });
+
+    const ctrl = initMagazineBook(document)!;
+    expect(book.classList.contains('is-double-spread')).toBe(true);
+    expect(book.classList.contains('is-cover-spread-active')).toBe(true);
+
+    ctrl.nextPage();
+    expect(ctrl.getCurrentIndex()).toBe(1);
+    const pages = ctrl.getPages();
+    expect(pages[1].element.hidden).toBe(false);
+    expect(pages[2].element.hidden).toBe(false);
+    expect(pages[1].element.classList.contains('is-left-sheet')).toBe(true);
+    expect(pages[2].element.classList.contains('is-right-sheet')).toBe(true);
+
+    ctrl.destroy();
+  });
+
   it('updates magazine page photos and extra editorial text blocks dynamically from CMS data', () => {
     loadIndexDom();
     renderPagePhotos(document, {

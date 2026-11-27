@@ -38,7 +38,7 @@ export interface MagazineBookController {
   destroy: () => void;
 }
 
-const DOUBLE_SPREAD_QUERY = '(min-width: 56rem)';
+const DOUBLE_SPREAD_QUERY = '(min-width: 37.5rem) and (min-height: 28rem), (min-width: 56rem)';
 
 function prefersReducedMotion(): boolean {
   return Boolean(
