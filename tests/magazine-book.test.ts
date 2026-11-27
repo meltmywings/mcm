@@ -315,6 +315,7 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     dispatchPointer('pointerdown', 800, 320);
     dispatchPointer('pointermove', 520, 320); // ~62% past spine midpoint: verso Glossary 01 swings left, Glossary 02 visible underneath right
     expect(pages[0].element.classList.contains('is-flip-leaf-right')).toBe(true);
+    expect(pages[0].element.classList.contains('is-right-sheet')).toBe(false);
     expect(pages[1].element.hidden).toBe(false);
     expect(pages[1].element.classList.contains('is-flip-leaf-left')).toBe(true);
     expect(pages[1].element.style.transform).toContain('rotateY(');
@@ -347,7 +348,11 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
 
     // Swipe backward twice -> Glossary spread -> Single Cover
     dispatchPointer('pointerdown', 200, 320);
-    dispatchPointer('pointermove', 650, 320);
+    dispatchPointer('pointermove', 350, 320); // first half of left-to-right turn
+    expect(pages[3].element.classList.contains('is-flip-leaf-left')).toBe(true);
+    expect(pages[3].element.classList.contains('is-left-sheet')).toBe(false);
+    expect(pages[4].element.classList.contains('is-static-right')).toBe(true);
+    expect(pages[4].element.classList.contains('is-right-sheet')).toBe(false);
     dispatchPointer('pointerup', 650, 320);
     expect(ctrl.getCurrentIndex()).toBe(1);
 

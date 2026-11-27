@@ -97,6 +97,12 @@ body {
   outline-offset: 2px;
 }
 
+/* Programmatic page-turn heading focus must never paint a black outline box around the cover logo or page titles */
+:where(h1, h2, h3, .hero-brand-title, .section-title)[tabindex='-1']:focus,
+:where(h1, h2, h3, .hero-brand-title, .section-title)[tabindex='-1']:focus-visible {
+  outline: none;
+}
+
 /* Top Running Magazine Masthead */
 .site-header {
   position: fixed;
@@ -285,10 +291,6 @@ body {
 
 /* Wide Display Double-Sheet Spread (Cover keeps identical single-page size & flips to Left; Interior pages pre-render underneath) */
 @media (min-width: 56rem) {
-  .mag-stage {
-    perspective: 2400px;
-  }
-
   #mag-book.is-double-spread {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -297,12 +299,17 @@ body {
     background: transparent;
     box-shadow: none;
     overflow: visible;
+    perspective: 2400px;
     transform-style: preserve-3d;
     transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   #mag-book.is-double-spread.is-curling {
     transition: none;
+  }
+
+  #mag-book.is-double-spread.is-curling .mag-page {
+    grid-column: 1 / -1;
   }
 
   #mag-book.is-double-spread.is-cover-spread-active:not(.is-curling) {

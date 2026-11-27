@@ -527,6 +527,12 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     const toRightEl =
       toAnchor === 0 ? pages[0]?.element ?? null : pages[toIndices[1]]?.element ?? null;
 
+    // Strip grid-column classes from all pages during curling so position:absolute percentages resolve
+    // against full #mag-book (50% = spine) instead of column-2's shifted containing block.
+    pages.forEach((p) => {
+      p.element.classList.remove('is-left-sheet', 'is-right-sheet');
+    });
+
     // Reveal every participating sheet immediately so next pages render live underneath before turn crosses spine
     [fromLeftEl, fromRightEl, toLeftEl, toRightEl].forEach((el) => {
       if (el) el.hidden = false;
