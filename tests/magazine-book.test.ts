@@ -152,19 +152,21 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
       expect.objectContaining({ types: ['backward'] }),
     );
 
-    // Every magazine page includes editorial imagery with empty alt text
+    // Text-only Glossary spread has zero images, while illustrated spreads render cutout silhouettes
+    expect(document.querySelectorAll('#glossary-1 img, #glossary-2 img')).toHaveLength(0);
+
     const editorialImgs = document.querySelectorAll<HTMLImageElement>('.mag-page .mag-photo-img');
-    expect(editorialImgs.length).toBeGreaterThanOrEqual(53);
+    expect(editorialImgs.length).toBeGreaterThanOrEqual(45);
     editorialImgs.forEach((img) => {
       expect(img.getAttribute('alt')).toBe('');
       expect(img.getAttribute('src')).toMatch(/^\/magazines\/(?:cutouts\/)?mag-\d{2}\.(?:jpg|png)$/);
     });
 
-    // Interior page cutouts expose contextual PNG silhouettes and shape-outside wrapping
+    // Interior illustrated page cutouts expose contextual PNG silhouettes and shape-outside wrapping
     const interiorFigs = document.querySelectorAll<HTMLElement>(
       '.is-zine-page .mag-ref-photos .mag-photo-figure',
     );
-    expect(interiorFigs.length).toBeGreaterThanOrEqual(52);
+    expect(interiorFigs.length).toBeGreaterThanOrEqual(44);
     interiorFigs.forEach((fig) => {
       const img = fig.querySelector<HTMLImageElement>('.mag-photo-img');
       expect(img?.getAttribute('src')).toMatch(/^\/magazines\/cutouts\/mag-\d{2}\.png$/);
@@ -354,6 +356,48 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     dispatchPointer('pointerup', 650, 320);
     expect(ctrl.getCurrentIndex()).toBe(0);
     expect(book.classList.contains('is-cover-spread-active')).toBe(true);
+
+    // Clicking vs swiping over a Glossary link: tap navigates to target page, horizontal drag turns spread instead of activating link
+    ctrl.nextPage();
+    expect(ctrl.getCurrentIndex()).toBe(1);
+    const spreadEntry = document.querySelector<HTMLButtonElement>(
+      '#glossary-spread-right .glossary-entry-btn[data-glossary-index="7"]',
+    )!;
+    expect(spreadEntry).not.toBeNull();
+
+    // Tap (no drag) jumps to page 7
+    spreadEntry.click();
+    expect(ctrl.getCurrentIndex()).toBe(7);
+
+    // Return to Glossary spread and verify horizontal drag starting on Glossary button suppresses click and flips spread cleanly
+    ctrl.goToPage(1);
+    const liveEntry = document.querySelector<HTMLButtonElement>(
+      '#glossary-spread-right .glossary-entry-btn[data-glossary-index="7"]',
+    )!;
+    let rafCb: FrameRequestCallback | null = null;
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      rafCb = cb;
+      return 42;
+    });
+    const dragTarget = (type: string, target: EventTarget, clientX: number) => {
+      const evt = new Event(type, { bubbles: true, cancelable: true }) as unknown as PointerEvent;
+      Object.defineProperty(evt, 'pointerId', { value: 11 });
+      Object.defineProperty(evt, 'isPrimary', { value: true });
+      Object.defineProperty(evt, 'button', { value: 0 });
+      Object.defineProperty(evt, 'clientX', { value: clientX });
+      Object.defineProperty(evt, 'clientY', { value: 320 });
+      target.dispatchEvent(evt);
+    };
+
+    dragTarget('pointerdown', liveEntry, 780);
+    dragTarget('pointermove', book, 420);
+    dragTarget('pointerup', book, 420);
+    const postDragClick = new MouseEvent('click', { bubbles: true, cancelable: true });
+    liveEntry.dispatchEvent(postDragClick);
+    expect(postDragClick.defaultPrevented).toBe(true);
+    // Complete settle animation -> settles on spread [03 | 04], never jumped to 7
+    (rafCb as FrameRequestCallback | null)?.(10000);
+    expect(ctrl.getCurrentIndex()).toBe(3);
 
     ctrl.destroy();
   });

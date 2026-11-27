@@ -209,6 +209,19 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   let suppressNextClick = false;
   let suppressClickTimer: ReturnType<typeof setTimeout> | undefined;
 
+  const clearSuppressClick = () => {
+    suppressNextClick = false;
+    clearTimeout(suppressClickTimer);
+  };
+
+  const armSuppressNextClick = () => {
+    suppressNextClick = true;
+    clearTimeout(suppressClickTimer);
+    suppressClickTimer = setTimeout(() => {
+      suppressNextClick = false;
+    }, 60);
+  };
+
   interface CurlSession {
     pointerId: number;
     startX: number;
@@ -297,7 +310,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       let countSoFar = 0;
 
       for (const grp of groups) {
-        if (leftGroups.length === 0 || countSoFar < Math.ceil(totalEntries * 0.45)) {
+        if (leftGroups.length === 0 || countSoFar < Math.floor(totalEntries * 0.45)) {
           leftGroups.push(grp);
         } else {
           rightGroups.push(grp);
@@ -738,6 +751,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   };
 
   const nextPage = () => {
+    clearSuppressClick();
     const pages = collectPages();
     const nextAnchor = getAdjacentAnchor(
       currentIndex,
@@ -749,6 +763,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   };
 
   const prevPage = () => {
+    clearSuppressClick();
     const pages = collectPages();
     const prevAnchor = getAdjacentAnchor(
       currentIndex,
@@ -879,6 +894,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     if (!e.isPrimary || (e.button !== undefined && e.button !== 0)) return;
     if (glossaryDialog?.open || isNonSwipeFormControl(e.target)) return;
 
+    clearSuppressClick();
     flushPendingSettle();
     const pages = collectPages();
     if (pages.length <= 1) return;
@@ -978,6 +994,9 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     const dy = e.clientY - session.startY;
 
     if (session.locked === null && !forceCancel) {
+      if (Math.hypot(dx, dy) >= 8) {
+        armSuppressNextClick();
+      }
       if (Math.abs(dx) >= 24 && Math.abs(dx) > Math.abs(dy) * 1.1) {
         const direction: 'forward' | 'backward' = dx < 0 ? 'forward' : 'backward';
         const targetIndex = getAdjacentAnchor(
@@ -987,11 +1006,6 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
           session.doubleSpread,
         );
         if (targetIndex !== null) {
-          suppressNextClick = true;
-          clearTimeout(suppressClickTimer);
-          suppressClickTimer = setTimeout(() => {
-            suppressNextClick = false;
-          }, 300);
           goToPage(targetIndex);
         }
       }
@@ -1002,11 +1016,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       return;
     }
 
-    suppressNextClick = true;
-    clearTimeout(suppressClickTimer);
-    suppressClickTimer = setTimeout(() => {
-      suppressNextClick = false;
-    }, 300);
+    armSuppressNextClick();
 
     const directionalVelocity = (session.direction === 'forward' ? -dx : dx) / dt;
     const shouldCommit = !forceCancel

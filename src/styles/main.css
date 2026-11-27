@@ -1720,14 +1720,47 @@ dialog.case-dialog::backdrop {
   gap: 0;
 }
 
+.mag-glossary-canvas {
+  background: #fffdfb;
+  padding: 0.75rem 0.9rem 1.85rem;
+}
+
+.mag-glossary-sheet {
+  display: block;
+}
+
+.mag-glossary-title {
+  margin: 0.1rem 0 0.2rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 2.8vw, 1.65rem);
+  font-weight: 600;
+  line-height: 1.08;
+  color: #161415;
+}
+
+.mag-glossary-subtitle {
+  margin: 0 0 0.55rem;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  color: #4a4441;
+}
+
+#mag-book a,
+#mag-book button {
+  touch-action: pan-y;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .glossary-chapter-group {
   display: block;
-  margin-block-end: 0.45rem;
+  margin-block-end: 0.5rem;
 }
 
 .glossary-chapter-heading {
-  margin: 0.2rem 0 0.15rem;
-  padding-block-end: 0.12rem;
+  margin: 0.2rem 0 0.18rem;
+  padding-block-end: 0.14rem;
   border-block-end: 1.5px solid #d11d6f;
   font-family: var(--font-sans);
   font-size: 0.58rem;
@@ -1758,9 +1791,12 @@ dialog.case-dialog::backdrop {
 }
 
 .glossary-entry-btn.is-compact {
-  width: auto;
-  padding: 0.22rem 0;
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.24rem 0;
   border-block-end-color: rgba(209, 29, 111, 0.18);
+  touch-action: pan-y;
 }
 
 .glossary-entry-btn:hover .glossary-entry-title {

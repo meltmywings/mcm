@@ -563,8 +563,6 @@ function renderVisualEditor(): void {
           </div>
         </div>
         ${renderPageMediaAndTextStrip('cover', 'Cover Page')}
-        ${renderPageMediaAndTextStrip('glossary-1', 'Page 01: Glossary Pt. I')}
-        ${renderPageMediaAndTextStrip('glossary-2', 'Page 02: Glossary Pt. II')}
       </section>`);
   }
 

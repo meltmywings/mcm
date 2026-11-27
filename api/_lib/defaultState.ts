@@ -276,18 +276,6 @@ export const DEFAULT_CMS_STATE: CmsState = {
   hiddenSections: [],
   pagePhotos: {
     cover: [{ id: 'ph-cover-1', src: '/magazines/mag-01.jpg', caption: 'Issue 01 Cover' }],
-    'glossary-1': [
-      { id: 'ph-gl1-1', src: '/magazines/cutouts/mag-02.png', caption: 'Runway Opening' },
-      { id: 'ph-gl1-2', src: '/magazines/cutouts/mag-05.png', caption: 'Floral Drop' },
-      { id: 'ph-gl1-3', src: '/magazines/cutouts/mag-09.png', caption: 'Front Row' },
-      { id: 'ph-gl1-4', src: '/magazines/cutouts/mag-04.png', caption: 'Duo Edit' },
-    ],
-    'glossary-2': [
-      { id: 'ph-gl2-1', src: '/magazines/cutouts/mag-03.png', caption: 'Editorial Portrait' },
-      { id: 'ph-gl2-2', src: '/magazines/cutouts/mag-13.png', caption: 'London Dispatch' },
-      { id: 'ph-gl2-3', src: '/magazines/cutouts/mag-08.png', caption: 'Backstage' },
-      { id: 'ph-gl2-4', src: '/magazines/cutouts/mag-15.png', caption: 'Issue Finale' },
-    ],
     metrics: [
       { id: 'ph-metrics-1', src: '/magazines/cutouts/mag-03.png', caption: 'Stage Edit' },
       { id: 'ph-metrics-2', src: '/magazines/cutouts/mag-05.png', caption: 'Floral Bag Drop' },
