@@ -1,11 +1,29 @@
+import {
+  balanceGlossarySpreads,
+  paginateBookToCoverHeight,
+  restorePaginatedFlow,
+  syncCoverPageHeight,
+} from './magazinePaginator';
+
 export interface MagazinePageMeta {
   index: number;
   id: string;
   chapter: string;
+  topic: string;
   folio: string;
   title: string;
   description: string;
   element: HTMLElement;
+}
+
+export interface TopicGroup {
+  chapter: string;
+  topic: string;
+  description: string;
+  startIndex: number;
+  endIndex: number;
+  rangeLabel: string;
+  pages: MagazinePageMeta[];
 }
 
 export interface MagazineBookController {
@@ -82,7 +100,13 @@ function getAdjacentAnchor(
 
 interface ChapterGroup {
   chapter: string;
-  entries: MagazinePageMeta[];
+  entries: TopicGroup[];
+}
+
+function formatTopicRangeLabel(startIndex: number, endIndex: number): string {
+  if (startIndex === 0 && endIndex === 0) return 'COVER';
+  if (startIndex === endIndex) return `PAGE ${String(startIndex).padStart(2, '0')}`;
+  return `PAGES ${String(startIndex).padStart(2, '0')}–${String(endIndex).padStart(2, '0')}`;
 }
 
 function groupPagesByChapter(pages: readonly MagazinePageMeta[]): ChapterGroup[] {
@@ -96,13 +120,28 @@ function groupPagesByChapter(pages: readonly MagazinePageMeta[]): ChapterGroup[]
       byName.set(page.chapter, group);
       groups.push(group);
     }
-    group.entries.push(page);
+    const existing = group.entries.find((entry) => entry.topic === page.topic);
+    if (existing) {
+      existing.endIndex = Math.max(existing.endIndex, page.index);
+      existing.rangeLabel = formatTopicRangeLabel(existing.startIndex, existing.endIndex);
+      existing.pages.push(page);
+    } else {
+      group.entries.push({
+        chapter: page.chapter,
+        topic: page.topic,
+        description: page.description,
+        startIndex: page.index,
+        endIndex: page.index,
+        rangeLabel: formatTopicRangeLabel(page.index, page.index),
+        pages: [page],
+      });
+    }
   }
   return groups;
 }
 
 function createGlossaryEntryNode(
-  page: MagazinePageMeta,
+  entry: TopicGroup,
   visibleIndices: readonly number[],
   compact = false,
 ): HTMLLIElement {
@@ -112,8 +151,9 @@ function createGlossaryEntryNode(
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = compact ? 'glossary-entry-btn is-compact' : 'glossary-entry-btn';
-  btn.dataset.glossaryIndex = String(page.index);
-  if (visibleIndices.includes(page.index)) {
+  btn.dataset.glossaryIndex = String(entry.startIndex);
+  btn.dataset.glossaryEndIndex = String(entry.endIndex);
+  if (visibleIndices.some((idx) => idx >= entry.startIndex && idx <= entry.endIndex)) {
     btn.setAttribute('aria-current', 'page');
   }
 
@@ -122,17 +162,17 @@ function createGlossaryEntryNode(
 
   const folio = document.createElement('span');
   folio.className = 'glossary-folio';
-  folio.textContent = page.folio;
+  folio.textContent = entry.rangeLabel;
 
   const title = document.createElement('strong');
   title.className = 'glossary-entry-title';
-  title.textContent = page.title;
+  title.textContent = entry.topic;
 
   top.append(folio, title);
 
   const desc = document.createElement('p');
   desc.className = 'glossary-entry-desc';
-  desc.textContent = page.description;
+  desc.textContent = entry.description;
 
   btn.append(top, desc);
   li.append(btn);
@@ -155,7 +195,7 @@ function renderChapterGroupNodes(
     const list = document.createElement('ol');
     list.className = 'glossary-chapter-list';
     list.append(
-      ...group.entries.map((page) => createGlossaryEntryNode(page, visibleIndices, compact)),
+      ...group.entries.map((entry) => createGlossaryEntryNode(entry, visibleIndices, compact)),
     );
 
     li.append(heading, list);
@@ -206,8 +246,13 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   let flipTimer: ReturnType<typeof setTimeout> | undefined;
   let settleRafId = 0;
   let pendingSettleFinish: (() => void) | null = null;
+  let activeSkipToken = 0;
   let suppressNextClick = false;
   let suppressClickTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const cancelSkipCascade = () => {
+    activeSkipToken += 1;
+  };
 
   const clearSuppressClick = () => {
     suppressNextClick = false;
@@ -267,12 +312,15 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
           : el.querySelector<HTMLElement>('.section-title')?.textContent?.trim() ||
             el.dataset.magTitle ||
             'Magazine Page';
+      const topic =
+        el.dataset.magTopic || (index === 0 ? 'Cover & Masthead' : dynamicTitle);
       const dynamicDesc =
         (id === 'cover'
           ? el.dataset.magDesc
           : el.querySelector<HTMLElement>('.section-subtitle')?.textContent?.trim()) ||
         el.dataset.magDesc ||
         'Editorial feature inside Main Character Media.';
+      const topicDesc = el.dataset.magTopicDesc || dynamicDesc;
       const folio = index === 0 ? 'COVER' : `PAGE ${String(index).padStart(2, '0')}`;
 
       const folioEl = el.querySelector<HTMLElement>('.mag-folio-number');
@@ -288,15 +336,20 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
         index,
         id,
         chapter,
+        topic,
         folio,
         title: dynamicTitle,
-        description: dynamicDesc,
+        description: topicDesc,
         element: el,
       };
     });
   };
 
-  const renderGlossary = (pages: MagazinePageMeta[], visibleIndices: readonly number[]) => {
+  const renderGlossary = (
+    pages: MagazinePageMeta[],
+    visibleIndices: readonly number[],
+    splitRatio = 0.45,
+  ) => {
     const groups = groupPagesByChapter(pages);
 
     if (glossaryList) {
@@ -304,13 +357,13 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     }
 
     if (glossarySpreadLeft && glossarySpreadRight) {
-      const totalEntries = pages.length;
+      const totalTopics = groups.reduce((acc, g) => acc + g.entries.length, 0);
       const leftGroups: ChapterGroup[] = [];
       const rightGroups: ChapterGroup[] = [];
       let countSoFar = 0;
 
       for (const grp of groups) {
-        if (leftGroups.length === 0 || countSoFar < Math.floor(totalEntries * 0.45)) {
+        if (leftGroups.length === 0 || countSoFar < Math.floor(totalTopics * splitRatio)) {
           leftGroups.push(grp);
         } else {
           rightGroups.push(grp);
@@ -375,7 +428,103 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       );
     }
 
-    renderGlossary(pages, visibleIndices);
+    renderGlossary(pages, visibleIndices, glossarySplitRatio);
+  };
+
+  let glossarySplitRatio = 0.45;
+  let isRepaginating = false;
+  let lastLayoutSignature = '';
+
+  interface ReadingAnchor {
+    pageIndex: number;
+    pageId: string;
+    baseId: string;
+    chapter: string;
+    topic: string;
+    caseId?: string;
+    itemText?: string;
+  }
+
+  const captureReadingAnchor = (pages: readonly MagazinePageMeta[]): ReadingAnchor => {
+    const active = pages[currentIndex] ?? pages[0];
+    const el = active?.element;
+    const baseId = el?.dataset.magContinuationOf || active?.id || 'cover';
+    const caseId = el?.querySelector<HTMLElement>('.case-card[data-case-id]:not([hidden])')?.dataset
+      .caseId;
+    const itemEl = el?.querySelector<HTMLElement>(
+      '.event-card, .service-card, .faq-item, .custom-text-card, .custom-ref-card, .mag-zine-copy',
+    );
+    return {
+      pageIndex: currentIndex,
+      pageId: active?.id || 'cover',
+      baseId,
+      chapter: active?.chapter || 'Front Matter',
+      topic: active?.topic || 'Cover & Masthead',
+      caseId,
+      itemText: itemEl?.textContent?.trim().slice(0, 64),
+    };
+  };
+
+  const resolveAnchorIndex = (
+    pages: readonly MagazinePageMeta[],
+    anchor: ReadingAnchor,
+  ): number => {
+    if (pages.length === 0) return 0;
+    if (anchor.caseId) {
+      const cardMatch = pages.findIndex(
+        (p) =>
+          p.element.querySelector(
+            `.case-card[data-case-id="${anchor.caseId}"]:not([hidden])`,
+          ) !== null,
+      );
+      if (cardMatch >= 0) return cardMatch;
+    }
+    const exactMatch = pages.findIndex((p) => p.id === anchor.pageId);
+    if (exactMatch >= 0) return exactMatch;
+
+    if (anchor.itemText) {
+      const itemMatch = pages.findIndex((p) => {
+        const els = p.element.querySelectorAll<HTMLElement>(
+          '.event-card, .service-card, .faq-item, .custom-text-card, .custom-ref-card, .mag-zine-copy',
+        );
+        return Array.from(els).some(
+          (el) => el.textContent?.trim().slice(0, 64) === anchor.itemText,
+        );
+      });
+      if (itemMatch >= 0) return itemMatch;
+    }
+
+    const baseMatch = pages.findIndex(
+      (p) =>
+        p.id === anchor.baseId ||
+        p.element.dataset.magContinuationOf === anchor.baseId ||
+        (p.chapter === anchor.chapter && p.topic === anchor.topic),
+    );
+    if (baseMatch >= 0) return baseMatch;
+
+    return Math.min(anchor.pageIndex, pages.length - 1);
+  };
+
+  const syncChromeHeights = () => {
+    if (typeof document === 'undefined' || !document.documentElement) return;
+    const header = root.querySelector<HTMLElement>('.site-header');
+    const pager = root.querySelector<HTMLElement>('.mag-pager');
+    const docStyle = document.documentElement.style;
+    const headerH = header?.getBoundingClientRect?.().height ?? 0;
+    const pagerH = pager?.getBoundingClientRect?.().height ?? 0;
+    if (headerH > 0) docStyle.setProperty('--mag-header-actual', `${Math.ceil(headerH)}px`);
+    if (pagerH > 0) docStyle.setProperty('--mag-pager-actual', `${Math.ceil(pagerH)}px`);
+  };
+
+  const getLayoutSignature = (): string => {
+    const header = root.querySelector<HTMLElement>('.site-header');
+    const pager = root.querySelector<HTMLElement>('.mag-pager');
+    const stage = book.closest<HTMLElement>('.mag-stage') ?? book;
+    const stageRect = stage.getBoundingClientRect?.();
+    const headerH = Math.ceil(header?.getBoundingClientRect?.().height ?? 0);
+    const pagerH = Math.ceil(pager?.getBoundingClientRect?.().height ?? 0);
+    const doubleSpread = isDoubleSpreadViewport() ? '2' : '1';
+    return `${Math.round(stageRect?.width ?? 0)}x${Math.round(stageRect?.height ?? 0)}:${headerH}x${pagerH}:${doubleSpread}`;
   };
 
   const applyActivePageDom = (pages: MagazinePageMeta[], targetIndex: number) => {
@@ -402,49 +551,43 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     currentIndex = anchor;
     renderPager(pages, visible);
     preloadAdjacentImages(pages, anchor);
-    fitVisiblePagesToViewport();
-  };
-
-  const syncChromeHeights = () => {
-    if (typeof document === 'undefined' || !document.documentElement) return;
-    const header = root.querySelector<HTMLElement>('.site-header');
-    const pager = root.querySelector<HTMLElement>('.mag-pager');
-    const docStyle = document.documentElement.style;
-    const headerH = header?.getBoundingClientRect?.().height ?? 0;
-    const pagerH = pager?.getBoundingClientRect?.().height ?? 0;
-    if (headerH > 0) docStyle.setProperty('--mag-header-actual', `${Math.ceil(headerH)}px`);
-    if (pagerH > 0) docStyle.setProperty('--mag-pager-actual', `${Math.ceil(pagerH)}px`);
-  };
-
-  const fitPageElementToViewport = (pageEl: HTMLElement) => {
-    if (pageEl.hidden || pageEl.clientHeight <= 0 || pageEl.clientWidth <= 0) return;
-
-    const canvas = pageEl.querySelector<HTMLElement>('.mag-spread-canvas, .mag-cover-overlay');
-    pageEl.removeAttribute('data-fit-tier');
-    canvas?.style.removeProperty('--mag-fit-scale');
-
-    const fits = () => pageEl.scrollHeight <= pageEl.clientHeight + 1;
-    if (fits()) return;
-
-    pageEl.dataset.fitTier = '1';
-    if (fits()) return;
-
-    pageEl.dataset.fitTier = '2';
-    if (fits()) return;
-
-    pageEl.dataset.fitTier = '3';
-    if (!canvas) return;
-    for (const scale of [0.92, 0.85, 0.78, 0.72, 0.65, 0.58]) {
-      canvas.style.setProperty('--mag-fit-scale', String(scale));
-      if (fits()) return;
-    }
-  };
-
-  const fitVisiblePagesToViewport = () => {
     syncChromeHeights();
-    book
-      .querySelectorAll<HTMLElement>('.mag-page:not([hidden])')
-      .forEach((pageEl) => fitPageElementToViewport(pageEl));
+    syncCoverPageHeight(book);
+  };
+
+  const reflowMagazinePages = (preservePosition = true) => {
+    if (isRepaginating) return;
+    isRepaginating = true;
+    try {
+      cancelSkipCascade();
+      flushPendingSettle();
+      const pagesBefore = collectPages();
+      const anchor = captureReadingAnchor(pagesBefore);
+
+      syncChromeHeights();
+      const doubleSpread = isDoubleSpreadViewport();
+      book.classList.toggle('is-double-spread', doubleSpread);
+
+      const coverHeight = paginateBookToCoverHeight(book);
+      const nextPages = collectPages();
+      const resolved = preservePosition
+        ? resolveAnchorIndex(nextPages, anchor)
+        : Math.min(currentIndex, Math.max(0, nextPages.length - 1));
+
+      applyActivePageDom(nextPages, resolved);
+
+      if (coverHeight > 0) {
+        const visibleNow = getVisibleIndicesForAnchor(currentIndex, nextPages.length, doubleSpread);
+        balanceGlossarySpreads(book, coverHeight, (ratio) => {
+          glossarySplitRatio = ratio;
+          renderGlossary(nextPages, visibleNow, ratio);
+        });
+      }
+
+      lastLayoutSignature = getLayoutSignature();
+    } finally {
+      isRepaginating = false;
+    }
   };
 
   const clearCurlVisuals = () => {
@@ -665,18 +808,23 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     commitIndex: number | null,
     touchYRatio = 0.78,
     duration = 160,
+    skipFocus = false,
+    onSettled?: () => void,
   ) => {
     const finish = () => {
       clearCurlVisuals();
       if (commitIndex !== null) {
         applyActivePageDom(pages, commitIndex);
-        if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-          window.scrollTo({ top: 0, behavior: 'auto' });
+        if (!skipFocus) {
+          if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+            window.scrollTo({ top: 0, behavior: 'auto' });
+          }
+          focusPageHeading(pages[commitIndex]?.element);
         }
-        focusPageHeading(pages[commitIndex]?.element);
       } else {
         applyActivePageDom(pages, currentIndex);
       }
+      onSettled?.();
     };
 
     if (
@@ -719,6 +867,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   };
 
   const goToPage = (targetIndex: number) => {
+    cancelSkipCascade();
     flushPendingSettle();
     const pages = collectPages();
     if (pages.length === 0) return;
@@ -730,22 +879,17 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     }
 
     const direction: 'forward' | 'backward' = anchor >= currentIndex ? 'forward' : 'backward';
-
-    // On wide displays with animation frame support, adjacent turns play the real physical 3D spine leaf turn
-    const adjForward = getAdjacentAnchor(currentIndex, 'forward', pages.length, true);
-    const adjBackward = getAdjacentAnchor(currentIndex, 'backward', pages.length, true);
-    if (
-      doubleSpread &&
-      !prefersReducedMotion() &&
-      typeof requestAnimationFrame === 'function' &&
-      (anchor === adjForward || anchor === adjBackward)
-    ) {
-      const rig = setupTurnRig(pages, currentIndex, anchor, direction, true);
-      if (rig) {
-        applyRigProgress(rig, 0, 0.5);
-        finalizeTurnSettle(pages, rig, 0, 1, anchor, 0.5, 300);
-        return;
-      }
+    const steps: number[] = [];
+    let cursor = currentIndex;
+    while (cursor !== anchor && steps.length < pages.length) {
+      const nextStep = getAdjacentAnchor(cursor, direction, pages.length, doubleSpread);
+      if (nextStep === null || nextStep === cursor) break;
+      steps.push(nextStep);
+      cursor = nextStep;
+    }
+    if (steps.length === 0 || steps[steps.length - 1] !== anchor) {
+      if (steps.length === 0) steps.push(anchor);
+      else steps[steps.length - 1] = anchor;
     }
 
     const scopedBook = book as HTMLElement & {
@@ -755,29 +899,94 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       };
     };
 
-    const updateDom = () => {
-      applyActivePageDom(pages, anchor);
+    const updateDomTo = (destIndex: number) => {
+      applyActivePageDom(pages, destIndex);
       if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
         window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
       }
-      focusPageHeading(pages[anchor]?.element);
+      focusPageHeading(pages[destIndex]?.element);
     };
 
-    if (!prefersReducedMotion() && typeof scopedBook.startViewTransition === 'function') {
-      try {
-        const transition = scopedBook.startViewTransition({
-          update: updateDom,
-          types: [direction],
-        });
-        transition?.ready?.catch?.(() => {});
-      } catch {
-        updateDom();
+    if (steps.length === 1) {
+      if (doubleSpread && !prefersReducedMotion() && typeof requestAnimationFrame === 'function') {
+        const rig = setupTurnRig(pages, currentIndex, anchor, direction, true);
+        if (rig) {
+          applyRigProgress(rig, 0, 0.5);
+          finalizeTurnSettle(pages, rig, 0, 1, anchor, 0.5, 300);
+          return;
+        }
+      }
+
+      if (!prefersReducedMotion() && typeof scopedBook.startViewTransition === 'function') {
+        try {
+          const transition = scopedBook.startViewTransition({
+            update: () => updateDomTo(anchor),
+            types: [direction],
+          });
+          transition?.ready?.catch?.(() => {});
+        } catch {
+          updateDomTo(anchor);
+          triggerFallbackFlip(direction);
+        }
+      } else {
+        updateDomTo(anchor);
         triggerFallbackFlip(direction);
       }
-    } else {
-      updateDom();
-      triggerFallbackFlip(direction);
+      return;
     }
+
+    if (prefersReducedMotion() || typeof requestAnimationFrame !== 'function') {
+      updateDomTo(anchor);
+      triggerFallbackFlip(direction);
+      return;
+    }
+
+    const cascadeToken = ++activeSkipToken;
+    const stepDuration = clamp(Math.round(560 / steps.length), 65, 165);
+
+    const runStep = (stepIdx: number) => {
+      if (cascadeToken !== activeSkipToken) return;
+      const destIndex = steps[stepIdx];
+      if (destIndex === undefined) {
+        activeSkipToken = 0;
+        return;
+      }
+      const isLast = stepIdx === steps.length - 1;
+      const stepDir: 'forward' | 'backward' = destIndex >= currentIndex ? 'forward' : 'backward';
+      const rig = setupTurnRig(pages, currentIndex, destIndex, stepDir, doubleSpread);
+      if (!rig) {
+        applyActivePageDom(pages, destIndex);
+        if (!isLast) {
+          runStep(stepIdx + 1);
+        } else {
+          focusPageHeading(pages[destIndex]?.element);
+          activeSkipToken = 0;
+        }
+        return;
+      }
+
+      applyRigProgress(rig, 0, 0.5);
+      finalizeTurnSettle(
+        pages,
+        rig,
+        0,
+        1,
+        destIndex,
+        0.5,
+        stepDuration,
+        !isLast,
+        () => {
+          if (cascadeToken !== activeSkipToken) return;
+          if (!isLast) {
+            runStep(stepIdx + 1);
+          } else {
+            activeSkipToken = 0;
+          }
+        },
+      );
+    };
+
+    runStep(0);
   };
 
   const goToPageById = (id: string): boolean => {
@@ -830,7 +1039,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       pages.length,
       isDoubleSpreadViewport(),
     );
-    renderGlossary(pages, visible);
+    renderGlossary(pages, visible, glossarySplitRatio);
     if (!glossaryDialog) return;
     if (typeof glossaryDialog.showModal === 'function') {
       glossaryDialog.showModal();
@@ -849,9 +1058,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   };
 
   const refresh = () => {
-    const pages = collectPages();
-    const safeIdx = Math.min(currentIndex, Math.max(0, pages.length - 1));
-    applyActivePageDom(pages, safeIdx);
+    reflowMagazinePages(true);
   };
 
   const handlePrev = () => prevPage();
@@ -944,6 +1151,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     if (glossaryDialog?.open || isNonSwipeFormControl(e.target)) return;
 
     clearSuppressClick();
+    cancelSkipCascade();
     flushPendingSettle();
     const pages = collectPages();
     if (pages.length <= 1) return;
@@ -1104,16 +1312,27 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       ? window.matchMedia(DOUBLE_SPREAD_QUERY)
       : null;
   const handleViewportChange = () => {
-    flushPendingSettle();
-    refresh();
+    reflowMagazinePages(true);
   };
-  const handleContentChangeFit = () => {
-    fitVisiblePagesToViewport();
+  const handleViewportResizeCheck = () => {
+    if (isRepaginating) return;
+    const sig = getLayoutSignature();
+    if (sig !== lastLayoutSignature) {
+      reflowMagazinePages(true);
+    }
+  };
+  const handleBeforeContentUpdate = () => {
+    cancelSkipCascade();
+    flushPendingSettle();
+    restorePaginatedFlow(book);
+  };
+  const handleContentUpdated = () => {
+    reflowMagazinePages(true);
   };
   const chromeObserver =
     typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver(() => {
-          fitVisiblePagesToViewport();
+          handleViewportResizeCheck();
         })
       : null;
   const headerChrome = root.querySelector<HTMLElement>('.site-header');
@@ -1124,7 +1343,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     chromeObserver.observe(book);
   }
   if (typeof window !== 'undefined') {
-    window.addEventListener?.('resize', handleContentChangeFit);
+    window.addEventListener?.('resize', handleViewportChange);
   }
   spreadMql?.addEventListener?.('change', handleViewportChange);
 
@@ -1133,8 +1352,9 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   dotsContainer?.addEventListener('click', handleDotsClick);
   glossaryList?.addEventListener('click', handleGlossaryClick);
   book.addEventListener('click', handleGlossaryClick);
-  book.addEventListener('click', handleContentChangeFit);
-  book.addEventListener('load', handleContentChangeFit, true);
+  book.addEventListener('mcm:before-content-update', handleBeforeContentUpdate);
+  book.addEventListener('mcm:content-updated', handleContentUpdated);
+  book.addEventListener('load', handleContentUpdated, true);
   glossaryDialog?.addEventListener('close', handleGlossaryClose);
   coverGlossaryBtn?.addEventListener('click', handleOpenGlossary);
   pagerGlossaryBtn?.addEventListener('click', handleOpenGlossary);
@@ -1161,12 +1381,13 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     openGlossary,
     refresh,
     destroy: () => {
+      cancelSkipCascade();
       clearTimeout(flipTimer);
       clearTimeout(suppressClickTimer);
       clearCurlVisuals();
       chromeObserver?.disconnect();
       if (typeof window !== 'undefined') {
-        window.removeEventListener?.('resize', handleContentChangeFit);
+        window.removeEventListener?.('resize', handleViewportChange);
       }
       spreadMql?.removeEventListener?.('change', handleViewportChange);
       prevBtn?.removeEventListener('click', handlePrev);
@@ -1174,8 +1395,9 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       dotsContainer?.removeEventListener('click', handleDotsClick);
       glossaryList?.removeEventListener('click', handleGlossaryClick);
       book.removeEventListener('click', handleGlossaryClick);
-      book.removeEventListener('click', handleContentChangeFit);
-      book.removeEventListener('load', handleContentChangeFit, true);
+      book.removeEventListener('mcm:before-content-update', handleBeforeContentUpdate);
+      book.removeEventListener('mcm:content-updated', handleContentUpdated);
+      book.removeEventListener('load', handleContentUpdated, true);
       glossaryDialog?.removeEventListener('close', handleGlossaryClose);
       coverGlossaryBtn?.removeEventListener('click', handleOpenGlossary);
       pagerGlossaryBtn?.removeEventListener('click', handleOpenGlossary);

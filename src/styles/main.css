@@ -1939,7 +1939,7 @@ dialog.case-dialog::backdrop {
   }
 }
 
-/* Zero-Scroll Responsive Form Grid & Adaptive Content Reshuffling Tiers */
+/* Responsive 2-Col Brief Form Grid & Cover-Derived Uniform Page Height */
 .brief-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1950,135 +1950,51 @@ dialog.case-dialog::backdrop {
   grid-column: 1 / -1;
 }
 
-.mag-page[data-fit-tier='1'] .mag-zine-canvas,
-.mag-page[data-fit-tier='2'] .mag-zine-canvas,
-.mag-page[data-fit-tier='3'] .mag-zine-canvas {
-  padding: 0.32rem 0.45rem 0.25rem;
-  gap: 0.2rem;
+.mag-book {
+  height: var(--mag-page-h, 100%);
 }
 
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .mag-ref-left-stage .mag-photo-figure {
-  width: 27%;
-  margin-block: 0.08rem;
+.mag-book > .mag-page {
+  height: var(--mag-page-h, 100%);
+  max-height: var(--mag-page-h, 100%);
+  overflow: hidden;
 }
 
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .mag-zine-title,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .mag-glossary-title {
-  font-size: 0.78rem;
+.mag-book.is-paginating > .mag-page[data-mag-measuring='true'] {
+  position: absolute !important;
+  inset-block-start: 0 !important;
+  inset-inline-start: 0 !important;
+  width: 100%;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .mag-zine-copy,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .mag-glossary-subtitle,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .case-summary,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .service-desc,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .faq-panel {
-  font-size: 0.58rem;
-  line-height: 1.16;
-  margin-block-end: 0.16rem;
+@media (min-width: 56rem) {
+  #mag-book.is-double-spread > .mag-page[data-mag-measuring='true'] {
+    width: 50%;
+  }
 }
 
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .case-card,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .event-card,
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .service-card {
-  padding-block-end: 0.18rem;
+.mag-page[data-mag-continued='true'] .mag-cover-overlay,
+.mag-page[data-mag-continued='true'] .mag-ref-mini-trio {
+  opacity: 0.94;
 }
 
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .mag-cover-overlay {
-  padding: clamp(0.6rem, 1.8vh, 1.25rem);
-  gap: 0.55rem;
-}
-
-.mag-page:is([data-fit-tier='1'], [data-fit-tier='2'], [data-fit-tier='3']) .hero-mc-logo {
-  width: clamp(4.8rem, 14dvh, 9.5rem);
-}
-
-/* Tier 2: Reshuffle narrow right rail into compact top banner & expand prose to full sheet / 2-col layout */
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-ref-sheet {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.22rem;
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-ref-right-col {
-  order: -1;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
+.glossary-entry-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 0.35rem;
 }
 
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-ref-mini-trio {
-  width: 4.4rem;
-  gap: 0.12rem;
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-note-box {
-  padding: 0.26rem 0.35rem;
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-note-cutout {
-  width: 17%;
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-ref-left-stage .mag-photo-figure {
-  width: 21%;
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .glossary-chapter-list,
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-cover-columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.15rem 0.45rem;
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-coverline-link strong {
-  font-size: clamp(0.92rem, 2.2vw, 1.3rem);
-}
-
-.mag-page:is([data-fit-tier='2'], [data-fit-tier='3']) .mag-coverline-link span {
-  font-size: 0.54rem;
-}
-
-/* Tier 3: Fluid proportional scaling until scrollHeight fits viewport height with zero overflow */
-.mag-page[data-fit-tier='3'] .mag-zine-title,
-.mag-page[data-fit-tier='3'] .mag-glossary-title {
-  font-size: calc(0.75rem * var(--mag-fit-scale, 1));
-}
-
-.mag-page[data-fit-tier='3'] .mag-zine-copy,
-.mag-page[data-fit-tier='3'] .mag-glossary-subtitle,
-.mag-page[data-fit-tier='3'] .mag-folio-bar,
-.mag-page[data-fit-tier='3'] .case-meta,
-.mag-page[data-fit-tier='3'] .case-client,
-.mag-page[data-fit-tier='3'] .case-summary,
-.mag-page[data-fit-tier='3'] .case-metrics,
-.mag-page[data-fit-tier='3'] .service-title,
-.mag-page[data-fit-tier='3'] .service-desc,
-.mag-page[data-fit-tier='3'] .faq-trigger,
-.mag-page[data-fit-tier='3'] .faq-panel,
-.mag-page[data-fit-tier='3'] .glossary-entry-title,
-.mag-page[data-fit-tier='3'] .glossary-entry-desc,
-.mag-page[data-fit-tier='3'] .btn,
-.mag-page[data-fit-tier='3'] .mag-submit-btn,
-.mag-page[data-fit-tier='3'] .brief-form label,
-.mag-page[data-fit-tier='3'] .brief-form input,
-.mag-page[data-fit-tier='3'] .brief-form textarea {
-  font-size: calc(0.57rem * var(--mag-fit-scale, 1));
-}
-
-.mag-page[data-fit-tier='3'] .mag-coverline-link strong {
-  font-size: calc(1.05rem * var(--mag-fit-scale, 1));
-}
-
-.mag-page[data-fit-tier='3'] .mag-coverline-link span,
-.mag-page[data-fit-tier='3'] .mag-cover-cta {
-  font-size: calc(0.62rem * var(--mag-fit-scale, 1));
-}
-
-.mag-page[data-fit-tier='3'] .mag-ref-left-stage .mag-photo-figure {
-  width: calc(20% * var(--mag-fit-scale, 1));
-}
-
-.mag-page[data-fit-tier='3'] .mag-cover-overlay {
-  padding: calc(0.6rem * var(--mag-fit-scale, 1));
-  gap: calc(0.4rem * var(--mag-fit-scale, 1));
+.glossary-range {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #be185d;
+  white-space: nowrap;
 }
 /* === PHOTOREALISTIC MAGAZINES END === */

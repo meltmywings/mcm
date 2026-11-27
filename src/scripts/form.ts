@@ -204,14 +204,28 @@ export function initBriefForm(
     }
   };
 
-  form.querySelectorAll('input, select, textarea').forEach((el) => {
+  const getControls = (selector = 'input, select, textarea') =>
+    Array.from(form.elements).filter((el): el is HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement =>
+      el.matches?.(selector),
+    );
+
+  const eventHost: EventTarget = doc.getElementById('mag-book') ?? form;
+
+  getControls().forEach((el) => {
     el.setAttribute('aria-invalid', 'false');
     syncAria(el);
   });
 
+  const isOwnedControl = (target: Element | null): target is Element =>
+    Boolean(
+      target &&
+        target.matches?.('input, select, textarea') &&
+        ((target as HTMLInputElement).form === form || form.contains(target)),
+    );
+
   const onBlur = (e: Event) => {
-    const target = e.target as Element;
-    if (!target.matches?.('input, select, textarea')) return;
+    const target = e.target as Element | null;
+    if (!isOwnedControl(target)) return;
     const state = dirtyState.get(target) || { hasInteracted: false, hasBlurred: false };
     state.hasBlurred = true;
     dirtyState.set(target, state);
@@ -219,8 +233,8 @@ export function initBriefForm(
   };
 
   const onInput = (e: Event) => {
-    const target = e.target as Element;
-    if (!target.matches?.('input, select, textarea')) return;
+    const target = e.target as Element | null;
+    if (!isOwnedControl(target)) return;
     const state = dirtyState.get(target) || { hasInteracted: false, hasBlurred: false };
     state.hasInteracted = true;
     dirtyState.set(target, state);
@@ -230,8 +244,8 @@ export function initBriefForm(
   };
 
   const onChange = (e: Event) => {
-    const target = e.target as Element;
-    if (!target.matches?.('input, select, textarea')) return;
+    const target = e.target as Element | null;
+    if (!isOwnedControl(target)) return;
     const state = dirtyState.get(target) || { hasInteracted: false, hasBlurred: false };
     state.hasInteracted = true;
     dirtyState.set(target, state);
@@ -239,7 +253,8 @@ export function initBriefForm(
   };
 
   const onInvalid = (e: Event) => {
-    const target = e.target as Element;
+    const target = e.target as Element | null;
+    if (!isOwnedControl(target)) return;
     dirtyState.set(target, { hasInteracted: true, hasBlurred: true });
     announced.add(target);
     syncAria(target, false, true);
@@ -247,7 +262,7 @@ export function initBriefForm(
 
   const onReset = () => {
     setTimeout(() => {
-      form.querySelectorAll('input, select, textarea').forEach((el) => {
+      getControls().forEach((el) => {
         dirtyState.delete(el);
         el.classList.remove('user-invalid-fallback', 'user-valid-fallback');
         flagged.delete(el);
@@ -261,11 +276,7 @@ export function initBriefForm(
   const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
 
-    const controls = Array.from(
-      form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
-        'input:not([type="radio"]):not([type="checkbox"]), select, textarea',
-      ),
-    );
+    const controls = getControls('input:not([type="radio"]):not([type="checkbox"]), select, textarea');
 
     const invalidControls = controls.filter((control) => !control.validity.valid);
 
@@ -315,10 +326,10 @@ export function initBriefForm(
     form.querySelector<HTMLInputElement>('#full-name')?.focus();
   };
 
-  form.addEventListener('blur', onBlur, true);
-  form.addEventListener('input', onInput);
-  form.addEventListener('change', onChange, true);
-  form.addEventListener('invalid', onInvalid, true);
+  eventHost.addEventListener('blur', onBlur, true);
+  eventHost.addEventListener('input', onInput);
+  eventHost.addEventListener('change', onChange, true);
+  eventHost.addEventListener('invalid', onInvalid, true);
   form.addEventListener('reset', onReset, true);
   form.addEventListener('submit', handleSubmit);
   resetBtn?.addEventListener('click', handleResetClick);
@@ -326,10 +337,10 @@ export function initBriefForm(
   return {
     destroy: () => {
       clearTimeout(announceTimer);
-      form.removeEventListener('blur', onBlur, true);
-      form.removeEventListener('input', onInput);
-      form.removeEventListener('change', onChange, true);
-      form.removeEventListener('invalid', onInvalid, true);
+      eventHost.removeEventListener('blur', onBlur, true);
+      eventHost.removeEventListener('input', onInput);
+      eventHost.removeEventListener('change', onChange, true);
+      eventHost.removeEventListener('invalid', onInvalid, true);
       form.removeEventListener('reset', onReset, true);
       form.removeEventListener('submit', handleSubmit);
       resetBtn?.removeEventListener('click', handleResetClick);

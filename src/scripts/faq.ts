@@ -40,6 +40,7 @@ function buildFaqNodes(items: readonly FaqItem[]): HTMLElement[] {
       const isExpanded = button.getAttribute('aria-expanded') === 'true';
       button.setAttribute('aria-expanded', String(!isExpanded));
       panel.hidden = isExpanded;
+      button.dispatchEvent(new CustomEvent('mcm:content-updated', { bubbles: true }));
     });
 
     wrapper.append(heading, panel);

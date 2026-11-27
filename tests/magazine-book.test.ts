@@ -21,6 +21,7 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     Reflect.deleteProperty(document, 'startViewTransition');
     document.body.innerHTML = '';
   });
@@ -77,26 +78,31 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
       dialog.dispatchEvent(new Event('close'));
     });
 
+    vi.stubGlobal('requestAnimationFrame', undefined as unknown as typeof requestAnimationFrame);
     const ctrl = initMagazineBook(document)!;
     const coverGlossaryBtn = document.getElementById('open-glossary-btn') as HTMLButtonElement;
     coverGlossaryBtn.click();
 
     expect(dialog.showModal).toHaveBeenCalledTimes(1);
     const chapters = document.querySelectorAll<HTMLElement>('#glossary-list .glossary-chapter-heading');
-    expect(chapters.length).toBeGreaterThanOrEqual(5);
-    const entries = document.querySelectorAll<HTMLButtonElement>('#glossary-list .glossary-entry-btn');
-    expect(entries).toHaveLength(14);
+    expect(chapters.length).toBeGreaterThanOrEqual(7);
+    const entries = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('#glossary-list .glossary-entry-btn'),
+    );
+    expect(entries).toHaveLength(13);
     expect(entries[0].textContent).toContain('COVER');
     expect(entries[0].textContent).toContain('Cover & Masthead');
-    expect(entries[4].textContent).toContain('PAGE 04');
-    expect(entries[4].textContent).toContain('Campaigns that hijacked the feed.');
-    expect(entries[4].textContent).toContain('Filter by channel discipline');
+    expect(entries[1].textContent).toContain('PAGES 01–02');
+    expect(entries[3].textContent).toContain('PAGE 04');
+    expect(entries[3].textContent).toContain('Short-Form & Creator Launches');
 
     // Glossary Pt. I & Pt. II in-book spread also renders chapter headings & jump buttons
     expect(document.querySelectorAll('#glossary-spread-left .glossary-chapter-heading').length).toBeGreaterThanOrEqual(2);
     expect(document.querySelectorAll('#glossary-spread-right .glossary-chapter-heading').length).toBeGreaterThanOrEqual(2);
 
-    entries[7].click();
+    const servicesEntry = entries.find((el) => el.dataset.glossaryIndex === '7')!;
+    expect(servicesEntry).toBeDefined();
+    servicesEntry.click();
     expect(dialog.close).toHaveBeenCalledTimes(1);
     expect(ctrl.getCurrentIndex()).toBe(7);
     expect(ctrl.getPages()[7].id).toBe('services');
@@ -141,13 +147,13 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     const ctrl = initMagazineBook(document)!;
     expect(ctrl.getPages()).toHaveLength(15);
 
-    ctrl.goToPage(3);
+    ctrl.goToPage(1);
     expect(scopedTransition).toHaveBeenLastCalledWith(
       expect.objectContaining({ types: ['forward'] }),
     );
     expect(docTransition).not.toHaveBeenCalled();
 
-    ctrl.goToPage(1);
+    ctrl.goToPage(0);
     expect(scopedTransition).toHaveBeenLastCalledWith(
       expect.objectContaining({ types: ['backward'] }),
     );
@@ -407,10 +413,26 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     ctrl.destroy();
   });
 
-  it('dynamically measures header/pager safe bounds and reshuffles overflowing pages to eliminate vertical scrolling', () => {
+  it('locks all pages to cover height, spills overflow onto continuation pages, updates glossary ranges, and recalculates on resize', () => {
     loadIndexDom();
+    vi.stubGlobal('requestAnimationFrame', undefined as unknown as typeof requestAnimationFrame);
+
     const header = document.querySelector<HTMLElement>('.site-header')!;
     const pager = document.querySelector<HTMLElement>('.mag-pager')!;
+    const cover = document.getElementById('cover')!;
+    const book = document.getElementById('mag-book')!;
+    const workPage = document.getElementById('work')!;
+    const workGrid = document.getElementById('work-grid')!;
+
+    for (let idx = 1; idx <= 3; idx++) {
+      const li = document.createElement('li');
+      li.className = 'case-card';
+      li.dataset.caseId = `case-${idx}`;
+      li.textContent = `Campaign Case ${idx}`;
+      workGrid.append(li);
+    }
+
+    let currentCoverHeight = 600;
     Object.defineProperty(header, 'getBoundingClientRect', {
       configurable: true,
       value: () => ({ width: 390, height: 54, top: 0, left: 0, right: 390, bottom: 54 }),
@@ -419,21 +441,105 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
       configurable: true,
       value: () => ({ width: 390, height: 74, top: 726, left: 0, right: 390, bottom: 800 }),
     });
-
-    const pageOne = document.getElementById('metrics')!;
-    Object.defineProperty(pageOne, 'clientWidth', { configurable: true, get: () => 380 });
-    Object.defineProperty(pageOne, 'clientHeight', { configurable: true, get: () => 600 });
-    Object.defineProperty(pageOne, 'scrollHeight', {
+    Object.defineProperty(cover, 'getBoundingClientRect', {
       configurable: true,
-      get: () => (pageOne.dataset.fitTier === '2' || pageOne.dataset.fitTier === '3' ? 580 : 740),
+      value: () => ({ width: 380, height: currentCoverHeight, top: 54, left: 5, right: 385, bottom: 54 + currentCoverHeight }),
+    });
+    Object.defineProperty(book, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 380, height: currentCoverHeight, top: 54, left: 5, right: 385, bottom: 54 + currentCoverHeight }),
+    });
+    Object.defineProperty(workPage, 'scrollHeight', {
+      configurable: true,
+      get: () => 260 + workGrid.children.length * 160,
     });
 
     const ctrl = initMagazineBook(document)!;
-    ctrl.goToPage(3); // Metrics page (overflows at default tier & tier 1, fits after tier 2 reshuffle)
-
     expect(document.documentElement.style.getPropertyValue('--mag-header-actual')).toBe('54px');
     expect(document.documentElement.style.getPropertyValue('--mag-pager-actual')).toBe('74px');
-    expect(pageOne.dataset.fitTier).toBe('2');
+    expect(book.style.getPropertyValue('--mag-page-h')).toBe('600px');
+
+    // With 3 cards -> 260 + 480 = 740 > 600 -> case-3 spills to #work--c1
+    const pagesAfterInit = ctrl.getPages();
+    expect(pagesAfterInit).toHaveLength(15);
+    expect(pagesAfterInit[4].id).toBe('work');
+    expect(pagesAfterInit[5].id).toBe('work--c1');
+    expect(pagesAfterInit[5].element.querySelector('[data-case-id="case-3"]')).not.toBeNull();
+
+    // Glossary displays collapsed topic range PAGES 04–05 for Short-Form & Creator Launches
+    const topicBtn = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('#glossary-list .glossary-entry-btn'),
+    ).find((el) => el.textContent?.includes('Short-Form & Creator Launches'));
+    expect(topicBtn?.textContent).toContain('PAGES 04–05');
+    expect(topicBtn?.dataset.glossaryIndex).toBe('4');
+
+    // Navigate onto case-3 continuation page, then resize viewport taller so all 3 cards fit on #work
+    ctrl.goToPage(5);
+    expect(ctrl.getCurrentIndex()).toBe(5);
+    currentCoverHeight = 900;
+    window.dispatchEvent(new Event('resize'));
+
+    expect(book.style.getPropertyValue('--mag-page-h')).toBe('900px');
+    const pagesAfterGrow = ctrl.getPages();
+    expect(pagesAfterGrow).toHaveLength(14);
+    expect(ctrl.getCurrentIndex()).toBe(4); // Anchored cleanly onto #work containing case-3!
+    expect(workGrid.querySelectorAll('.case-card')).toHaveLength(3);
+
+    ctrl.openGlossary();
+    const updatedTopicBtn = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('#glossary-list .glossary-entry-btn'),
+    ).find((el) => el.textContent?.includes('Short-Form & Creator Launches'));
+    expect(updatedTopicBtn?.textContent).toContain('PAGE 04');
+
+    ctrl.destroy();
+  });
+
+  it('animates sequentially through intermediate pages when skipping via the page selector dots', () => {
+    loadIndexDom();
+    const book = document.getElementById('mag-book')!;
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('56rem'),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    Object.defineProperty(book, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 1000, height: 700, top: 60, left: 0, right: 1000, bottom: 760 }),
+    });
+
+    const rafQueue: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      rafQueue.push(cb);
+      return rafQueue.length;
+    });
+
+    const ctrl = initMagazineBook(document)!;
+    const dot5 = document.querySelector<HTMLButtonElement>('#mag-page-dots [data-page-target="5"]')!;
+    expect(dot5).not.toBeNull();
+
+    // Skipping from Cover (0) to spread [5, 6] must flip step-by-step: 0 -> 1 -> 3 -> 5
+    dot5.click();
+    expect(ctrl.getCurrentIndex()).toBe(0);
+    expect(book.classList.contains('is-curling-forward')).toBe(true);
+
+    let now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const visited: number[] = [];
+    for (let guard = 0; guard < 40 && rafQueue.length > 0; guard++) {
+      now += 250;
+      const cb = rafQueue.shift()!;
+      cb(now);
+      if (visited[visited.length - 1] !== ctrl.getCurrentIndex()) {
+        visited.push(ctrl.getCurrentIndex());
+      }
+    }
+
+    expect(visited).toEqual(expect.arrayContaining([1, 3, 5]));
+    expect(ctrl.getCurrentIndex()).toBe(5);
+    expect(book.classList.contains('is-curling')).toBe(false);
 
     ctrl.destroy();
   });

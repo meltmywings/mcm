@@ -409,7 +409,10 @@ export function renderCustomSections(
       secEl.id = pageKey;
       secEl.dataset.magPage = pageKey;
       secEl.dataset.customSection = section.id;
-      secEl.dataset.magChapter = 'Chapter V · Special Features';
+      secEl.dataset.magChapter = 'Chapter VIII · Special Features';
+      secEl.dataset.magTopic = section.heading || 'Featured Spotlight';
+      secEl.dataset.magTopicDesc =
+        section.subtitle || 'Curated editorial feature, links, and cultural moments.';
       secEl.dataset.magTitle = section.heading || 'Featured Spotlight';
       secEl.dataset.magDesc =
         section.subtitle || 'Curated editorial feature, links, and cultural moments.';

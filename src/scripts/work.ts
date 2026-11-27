@@ -112,9 +112,15 @@ export function initWorkSection(
     renderCaseStudies(grid, activeStudies);
   };
 
+  const emitBookLifecycle = (eventName: string) => {
+    const target = grid ?? grid2 ?? root.querySelector<HTMLElement>('#work');
+    target?.dispatchEvent(new CustomEvent(eventName, { bubbles: true }));
+  };
+
   renderIntoChapterGrids();
 
   const applyFilter = (filter: ChannelFilter) => {
+    emitBookLifecycle('mcm:before-content-update');
     currentFilter = filter;
     const allowedIds = new Set(filterCaseStudies(activeStudies, filter).map((item) => item.id));
 
@@ -123,6 +129,7 @@ export function initWorkSection(
       filterButtons.forEach((btn) => {
         btn.setAttribute('aria-pressed', String(btn.dataset.filter === filter));
       });
+      emitBookLifecycle('mcm:content-updated');
       return;
     }
 
@@ -141,9 +148,11 @@ export function initWorkSection(
     if (countEl) {
       countEl.textContent = `Showing ${visibleCount} ${visibleCount === 1 ? 'case study' : 'case studies'}`;
     }
+    emitBookLifecycle('mcm:content-updated');
   };
 
   const updateStudies = (nextStudies: readonly CaseStudy[]) => {
+    emitBookLifecycle('mcm:before-content-update');
     activeStudies = [...nextStudies];
     renderIntoChapterGrids();
     applyFilter(currentFilter);
@@ -157,9 +166,14 @@ export function initWorkSection(
   });
 
   if (dialog) {
-    setupCaseDialog(dialog, grid, root, () => activeStudies);
-    if (grid2) {
-      setupCaseDialog(dialog, grid2, root, () => activeStudies);
+    const book = root.querySelector<HTMLElement>('#mag-book');
+    if (book) {
+      setupCaseDialog(dialog, book, root, () => activeStudies);
+    } else {
+      setupCaseDialog(dialog, grid, root, () => activeStudies);
+      if (grid2) {
+        setupCaseDialog(dialog, grid2, root, () => activeStudies);
+      }
     }
   }
 
