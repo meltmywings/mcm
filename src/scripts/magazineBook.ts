@@ -402,6 +402,49 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     currentIndex = anchor;
     renderPager(pages, visible);
     preloadAdjacentImages(pages, anchor);
+    fitVisiblePagesToViewport();
+  };
+
+  const syncChromeHeights = () => {
+    if (typeof document === 'undefined' || !document.documentElement) return;
+    const header = root.querySelector<HTMLElement>('.site-header');
+    const pager = root.querySelector<HTMLElement>('.mag-pager');
+    const docStyle = document.documentElement.style;
+    const headerH = header?.getBoundingClientRect?.().height ?? 0;
+    const pagerH = pager?.getBoundingClientRect?.().height ?? 0;
+    if (headerH > 0) docStyle.setProperty('--mag-header-actual', `${Math.ceil(headerH)}px`);
+    if (pagerH > 0) docStyle.setProperty('--mag-pager-actual', `${Math.ceil(pagerH)}px`);
+  };
+
+  const fitPageElementToViewport = (pageEl: HTMLElement) => {
+    if (pageEl.hidden || pageEl.clientHeight <= 0 || pageEl.clientWidth <= 0) return;
+
+    const canvas = pageEl.querySelector<HTMLElement>('.mag-spread-canvas, .mag-cover-overlay');
+    pageEl.removeAttribute('data-fit-tier');
+    canvas?.style.removeProperty('--mag-fit-scale');
+
+    const fits = () => pageEl.scrollHeight <= pageEl.clientHeight + 1;
+    if (fits()) return;
+
+    pageEl.dataset.fitTier = '1';
+    if (fits()) return;
+
+    pageEl.dataset.fitTier = '2';
+    if (fits()) return;
+
+    pageEl.dataset.fitTier = '3';
+    if (!canvas) return;
+    for (const scale of [0.92, 0.85, 0.78, 0.72, 0.65, 0.58]) {
+      canvas.style.setProperty('--mag-fit-scale', String(scale));
+      if (fits()) return;
+    }
+  };
+
+  const fitVisiblePagesToViewport = () => {
+    syncChromeHeights();
+    book
+      .querySelectorAll<HTMLElement>('.mag-page:not([hidden])')
+      .forEach((pageEl) => fitPageElementToViewport(pageEl));
   };
 
   const clearCurlVisuals = () => {
@@ -1058,6 +1101,25 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     flushPendingSettle();
     refresh();
   };
+  const handleContentChangeFit = () => {
+    fitVisiblePagesToViewport();
+  };
+  const chromeObserver =
+    typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => {
+          fitVisiblePagesToViewport();
+        })
+      : null;
+  const headerChrome = root.querySelector<HTMLElement>('.site-header');
+  const pagerChrome = root.querySelector<HTMLElement>('.mag-pager');
+  if (chromeObserver) {
+    if (headerChrome) chromeObserver.observe(headerChrome);
+    if (pagerChrome) chromeObserver.observe(pagerChrome);
+    chromeObserver.observe(book);
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener?.('resize', handleContentChangeFit);
+  }
   spreadMql?.addEventListener?.('change', handleViewportChange);
 
   prevBtn?.addEventListener('click', handlePrev);
@@ -1065,6 +1127,8 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   dotsContainer?.addEventListener('click', handleDotsClick);
   glossaryList?.addEventListener('click', handleGlossaryClick);
   book.addEventListener('click', handleGlossaryClick);
+  book.addEventListener('click', handleContentChangeFit);
+  book.addEventListener('load', handleContentChangeFit, true);
   glossaryDialog?.addEventListener('close', handleGlossaryClose);
   coverGlossaryBtn?.addEventListener('click', handleOpenGlossary);
   pagerGlossaryBtn?.addEventListener('click', handleOpenGlossary);
@@ -1094,12 +1158,18 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       clearTimeout(flipTimer);
       clearTimeout(suppressClickTimer);
       clearCurlVisuals();
+      chromeObserver?.disconnect();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener?.('resize', handleContentChangeFit);
+      }
       spreadMql?.removeEventListener?.('change', handleViewportChange);
       prevBtn?.removeEventListener('click', handlePrev);
       nextBtn?.removeEventListener('click', handleNext);
       dotsContainer?.removeEventListener('click', handleDotsClick);
       glossaryList?.removeEventListener('click', handleGlossaryClick);
       book.removeEventListener('click', handleGlossaryClick);
+      book.removeEventListener('click', handleContentChangeFit);
+      book.removeEventListener('load', handleContentChangeFit, true);
       glossaryDialog?.removeEventListener('close', handleGlossaryClose);
       coverGlossaryBtn?.removeEventListener('click', handleOpenGlossary);
       pagerGlossaryBtn?.removeEventListener('click', handleOpenGlossary);

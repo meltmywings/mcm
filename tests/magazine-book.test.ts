@@ -402,6 +402,37 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     ctrl.destroy();
   });
 
+  it('dynamically measures header/pager safe bounds and reshuffles overflowing pages to eliminate vertical scrolling', () => {
+    loadIndexDom();
+    const header = document.querySelector<HTMLElement>('.site-header')!;
+    const pager = document.querySelector<HTMLElement>('.mag-pager')!;
+    Object.defineProperty(header, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 390, height: 54, top: 0, left: 0, right: 390, bottom: 54 }),
+    });
+    Object.defineProperty(pager, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ width: 390, height: 74, top: 726, left: 0, right: 390, bottom: 800 }),
+    });
+
+    const pageOne = document.getElementById('metrics')!;
+    Object.defineProperty(pageOne, 'clientWidth', { configurable: true, get: () => 380 });
+    Object.defineProperty(pageOne, 'clientHeight', { configurable: true, get: () => 600 });
+    Object.defineProperty(pageOne, 'scrollHeight', {
+      configurable: true,
+      get: () => (pageOne.dataset.fitTier === '2' || pageOne.dataset.fitTier === '3' ? 580 : 740),
+    });
+
+    const ctrl = initMagazineBook(document)!;
+    ctrl.goToPage(3); // Metrics page (overflows at default tier & tier 1, fits after tier 2 reshuffle)
+
+    expect(document.documentElement.style.getPropertyValue('--mag-header-actual')).toBe('54px');
+    expect(document.documentElement.style.getPropertyValue('--mag-pager-actual')).toBe('74px');
+    expect(pageOne.dataset.fitTier).toBe('2');
+
+    ctrl.destroy();
+  });
+
   it('updates magazine page photos and extra editorial text blocks dynamically from CMS data', () => {
     loadIndexDom();
     renderPagePhotos(document, {
