@@ -151,12 +151,12 @@ async function hydrateFromCms(
     }
 
     if (layoutChanged) {
-      const decodeTasks = Array.from(root.querySelectorAll<HTMLImageElement>('#mag-book img')).map(
-        (img) => {
-          img.loading = 'eager';
-          return img.decode?.().catch(() => {}) ?? Promise.resolve();
-        },
-      );
+      const decodeTasks = Array.from(
+        root.querySelectorAll<HTMLImageElement>('#mag-book .mag-page.is-active-page img, #mag-book #cover img'),
+      ).map((img) => {
+        img.loading = 'eager';
+        return img.decode?.().catch(() => {}) ?? Promise.resolve();
+      });
       await Promise.race([
         Promise.allSettled(decodeTasks),
         new Promise((resolve) => setTimeout(resolve, 250)),

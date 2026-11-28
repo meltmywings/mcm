@@ -326,6 +326,13 @@ function buildPhotoFigure(photo: MagazinePhoto, isCover: boolean, index = 0): HT
   img.alt = '';
   img.className = 'mag-photo-img';
   img.decoding = 'async';
+  if (isCover) {
+    img.setAttribute('fetchpriority', 'high');
+    img.loading = 'eager';
+  } else {
+    img.setAttribute('fetchpriority', 'low');
+    img.loading = 'lazy';
+  }
   figure.append(img);
 
   if (!isCover && photo.caption) {

@@ -284,12 +284,15 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   let curlSession: CurlSession | null = null;
 
   const preloadAdjacentImages = (pages: readonly MagazinePageMeta[], centerIdx: number) => {
-    const start = Math.max(0, centerIdx - 2);
-    const end = Math.min(pages.length - 1, centerIdx + 4);
+    const start = Math.max(0, centerIdx - 1);
+    const end = Math.min(pages.length - 1, centerIdx + 2);
     for (let i = start; i <= end; i++) {
       pages[i]?.element.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
         img.loading = 'eager';
-        img.decoding = 'sync';
+        img.decoding = 'async';
+        if (i !== 0) {
+          img.removeAttribute('fetchpriority');
+        }
         img.decode?.().catch(() => {});
       });
     }
@@ -1404,8 +1407,13 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   }
   spreadMql?.addEventListener?.('change', handleViewportChange);
 
-  book.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
-    img.loading = 'eager';
+  book.querySelectorAll<HTMLImageElement>('[data-mag-page]:not(#cover) img').forEach((img) => {
+    if (img.loading !== 'eager') {
+      img.loading = 'lazy';
+    }
+    if (!img.hasAttribute('fetchpriority')) {
+      img.setAttribute('fetchpriority', 'low');
+    }
   });
 
   prevBtn?.addEventListener('click', handlePrev);

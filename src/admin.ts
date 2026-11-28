@@ -1,5 +1,6 @@
 import { DEFAULT_CMS_STATE } from '../api/_lib/defaultState';
 import { mountAdminMagazineClone, type AdminCloneHandle } from './scripts/adminMagazineClone';
+import { compressImageUpload, formatByteSize } from './scripts/imageCompression';
 import { initInstallPrompt, registerAppServiceWorker } from './scripts/install';
 import type {
   BuiltinSectionKey,
@@ -299,19 +300,11 @@ function closeEditorDialog(): void {
   }
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('Could not read file.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 function openPhotoEditorDialog(
   title: string,
   existing: MagazinePhoto | undefined,
   onSave: (photo: { src: string; caption: string }) => Promise<void>,
+  isCover = false,
 ): void {
   const dialog = document.getElementById('editor-dialog') as HTMLDialogElement | null;
   const titleEl = document.getElementById('editor-dialog-title');
@@ -324,7 +317,7 @@ function openPhotoEditorDialog(
 
   fieldsContainer.innerHTML = `
     <div class="field">
-      <label for="ed-photo-file">Upload New Image or Sticker (PNG cutout, JPG, WebP, GIF · max 4 MB)</label>
+      <label for="ed-photo-file">Upload New Image or Sticker (PNG, JPG, WebP, GIF · auto-compressed for fast loading)</label>
       <input type="file" id="ed-photo-file" accept="image/jpeg,image/png,image/webp,image/gif" />
       <p id="ed-photo-upload-status" class="preview-card-copy" hidden></p>
     </div>
@@ -388,25 +381,46 @@ function openPhotoEditorDialog(
   fileInput?.addEventListener('change', async () => {
     const file = fileInput.files?.[0];
     if (!file) return;
+    const submitBtn = dialog.querySelector<HTMLButtonElement>('#editor-dialog-form button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    fileInput.disabled = true;
     if (uploadStatus) {
-      uploadStatus.textContent = `Uploading ${file.name}…`;
+      uploadStatus.textContent = `Compressing ${file.name} (${formatByteSize(file.size)})…`;
       uploadStatus.hidden = false;
     }
     try {
-      const dataBase64 = await readFileAsDataUrl(file);
+      const payload = await compressImageUpload(file, {
+        maxDimension: isCover ? 1200 : 480,
+        maxBytes: isCover ? 150 * 1024 : 45 * 1024,
+        quality: isCover ? 0.78 : 0.72,
+      });
+      if (uploadStatus) {
+        uploadStatus.textContent = payload.wasCompressed
+          ? `Uploading compressed image (${formatByteSize(payload.originalBytes)} → ${formatByteSize(payload.compressedBytes)})…`
+          : `Uploading ${file.name} (${formatByteSize(payload.compressedBytes)})…`;
+      }
       const uploaded = await apiJson<{ ok: boolean; url: string }>('/api/media', {
         method: 'POST',
-        body: JSON.stringify({ contentType: file.type, dataBase64 }),
+        body: JSON.stringify({
+          contentType: payload.contentType,
+          dataBase64: payload.dataBase64,
+        }),
       });
       if (srcInput) srcInput.value = uploaded.url;
       if (previewImg) previewImg.src = uploaded.url;
       if (uploadStatus) {
-        uploadStatus.textContent = 'Photo uploaded to magazine archive. Click Save & Publish to apply.';
+        const sizeNote = payload.wasCompressed
+          ? `${formatByteSize(payload.originalBytes)} → ${formatByteSize(payload.compressedBytes)}`
+          : formatByteSize(payload.compressedBytes);
+        uploadStatus.textContent = `Compressed & uploaded (${sizeNote}). Click Save & Publish to apply.`;
       }
     } catch (err) {
       if (uploadStatus) {
         uploadStatus.textContent = err instanceof Error ? err.message : 'Upload failed.';
       }
+    } finally {
+      fileInput.disabled = false;
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 
@@ -536,6 +550,7 @@ async function handleVisualEditorClick(target: HTMLElement): Promise<void> {
         const nextMap = { ...state.pagePhotos, [pageKey]: nextList };
         await persistCmsPatch({ pagePhotos: nextMap }, 'Magazine image / sticker saved.');
       },
+      pageKey === 'cover',
     );
     return;
   }
