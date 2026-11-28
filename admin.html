@@ -28,25 +28,36 @@
   <header class="admin-header">
     <div class="admin-header-inner">
       <a href="/" class="admin-brand">
-        <svg width="36" height="30" viewBox="0 0 80 72" fill="none" aria-hidden="true">
+        <svg width="24" height="20" viewBox="0 0 80 72" fill="none" aria-hidden="true">
           <ellipse cx="40" cy="36" rx="35" ry="12" transform="rotate(-14 40 36)" stroke="#F8D98B" stroke-width="2.5" />
           <text x="12" y="42" font-family="'Cormorant Garamond', Georgia, serif" font-size="34" font-weight="700" fill="#F4A6C1">M</text>
           <text x="38" y="54" font-family="'Cormorant Garamond', Georgia, serif" font-size="34" font-weight="700" fill="#F4A6C1">C</text>
           <path d="M56 26l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z" fill="#F8D98B" />
         </svg>
-        <span>MCM STUDIO PORTAL</span>
+        <span>MCM STUDIO</span>
       </a>
 
+      <nav id="admin-header-tabs" class="tab-bar admin-header-tabs" aria-label="Studio sections" hidden>
+        <button type="button" class="tab-btn" data-tab="content" aria-selected="true">Magazine</button>
+        <button type="button" class="tab-btn" data-tab="clients" aria-selected="false">Clients</button>
+        <button type="button" class="tab-btn" data-tab="inbox" aria-selected="false">
+          Inbox <span id="inbox-badge" class="badge">0</span>
+        </button>
+      </nav>
+
       <div class="admin-header-actions">
-        <button type="button" id="install-app-btn" class="btn btn-secondary" hidden>Install Studio App</button>
-        <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">View Main Site ↗</a>
-        <button type="button" id="logout-btn" class="btn btn-primary" hidden>Lock Studio</button>
+        <button type="button" id="add-custom-section-top" class="btn btn-primary btn-xs" hidden>+ Page</button>
+        <button type="button" id="toggle-hidden-bar-btn" class="btn btn-secondary btn-xs" hidden>Hidden (0)</button>
+        <button type="button" id="install-app-btn" class="btn btn-secondary btn-xs" hidden>Install</button>
+        <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-xs">Site ↗</a>
+        <button type="button" id="logout-btn" class="btn btn-primary btn-xs" hidden>Lock</button>
       </div>
     </div>
   </header>
 
   <main class="admin-main">
     <div id="admin-toast" class="admin-toast" role="status" aria-live="polite" hidden></div>
+    <div id="hidden-sections-bar" class="hidden-sections-bar" hidden></div>
     <p id="install-status" class="sr-only" role="status" hidden></p>
 
     <!-- Password Gate Overlay -->
@@ -73,31 +84,8 @@
 
     <!-- Admin Console Workspace -->
     <section id="admin-workspace" class="workspace is-locked" inert aria-hidden="true" aria-label="Studio Management Workspace">
-      <nav class="tab-bar" aria-label="Studio sections">
-        <button type="button" class="tab-btn" data-tab="content" aria-selected="true">Website Visual Editor</button>
-        <button type="button" class="tab-btn" data-tab="clients" aria-selected="false">Clients &amp; Moderation</button>
-        <button type="button" class="tab-btn" data-tab="inbox" aria-selected="false">
-          Messages &amp; Briefs <span id="inbox-badge" class="badge">0</span>
-        </button>
-      </nav>
-
       <!-- Tab 1: Live Magazine Clone Editor -->
       <section class="tab-panel admin-mag-panel" data-panel="content">
-        <div class="editor-toolbar">
-          <p class="editor-hint">
-            Live Magazine Editor — flip pages just like the main site, and tap +, pencil, or bin icons directly on elements to edit in real time.
-          </p>
-          <button type="button" id="add-custom-section-top" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>Add Page</span>
-          </button>
-        </div>
-
-        <div id="hidden-sections-bar" class="hidden-sections-bar" hidden></div>
-
         <div id="visual-site-editor" class="visual-site-editor is-live-magazine"></div>
       </section>
 

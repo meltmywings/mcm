@@ -2071,8 +2071,8 @@ dialog.case-dialog::backdrop {
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
-  padding: 0.35rem clamp(0.2rem, 1vw, 1.25rem)
-    calc(var(--mag-pager-actual, var(--mag-pager-h)) + 0.35rem);
+  padding: 0.15rem clamp(0.2rem, 1vw, 1.25rem)
+    calc(var(--mag-pager-actual, var(--mag-pager-h)) + env(safe-area-inset-bottom, 0px) + 0.15rem);
 }
 
 .mag-stage.is-admin-stage .mag-pager {

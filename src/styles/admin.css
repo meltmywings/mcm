@@ -47,6 +47,7 @@ body.is-live-mag-active {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding-block-end: 0;
 }
 
 body.is-live-mag-active .admin-main {
@@ -63,14 +64,7 @@ body.is-live-mag-active #admin-workspace {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-}
-
-body.is-live-mag-active .tab-bar {
-  padding-inline: 0.75rem;
-  padding-block-start: 0.35rem;
-  margin-block-end: 0;
-  flex-shrink: 0;
+  gap: 0;
 }
 
 body.is-live-mag-active .admin-mag-panel {
@@ -78,14 +72,7 @@ body.is-live-mag-active .admin-mag-panel {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-}
-
-body.is-live-mag-active .editor-toolbar,
-body.is-live-mag-active .hidden-sections-bar {
-  margin-inline: 0.75rem;
-  padding: 0.45rem 0.75rem;
-  flex-shrink: 0;
+  gap: 0;
 }
 
 body.is-live-mag-active .visual-site-editor.is-live-magazine {
@@ -115,37 +102,73 @@ p {
   position: relative;
   z-index: 60;
   padding-block-start: env(safe-area-inset-top, 0px);
-  border-block-end: 2px solid var(--rose);
+  border-block-end: 1px solid var(--rose);
   background-color: var(--blush);
+  flex-shrink: 0;
 }
 
 .admin-header-inner {
   width: 100%;
-  max-width: 74rem;
+  max-width: 90rem;
+  min-block-size: var(--header-height, 3.25rem);
+  block-size: var(--header-height, 3.25rem);
   margin-inline: auto;
-  padding: 0.85rem 1rem;
+  padding: 0 max(0.75rem, env(safe-area-inset-left, 0px)) 0 max(0.75rem, env(safe-area-inset-right, 0px));
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-header-inner::-webkit-scrollbar {
+  display: none;
 }
 
 .admin-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.38rem;
   font-family: var(--font-display);
+  font-size: clamp(0.72rem, 1.8vw, 0.9rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-decoration: none;
   color: var(--rose);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.admin-header-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.admin-header-tabs[hidden] {
+  display: none;
 }
 
 .admin-header-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.32rem;
+  flex-shrink: 0;
+}
+
+.btn-xs:not(#admin-mag-stage *),
+.admin-header .tab-btn {
+  min-block-size: 30px;
+  padding: 0.2rem 0.62rem;
+  font-size: 0.72rem;
+  border-width: 1.5px;
+  white-space: nowrap;
 }
 
 .admin-main {
@@ -263,14 +286,16 @@ p {
 }
 
 .admin-toast {
-  position: sticky;
-  inset-block-start: 0.75rem;
-  z-index: 40;
-  margin-block-end: 1.25rem;
-  padding: 0.85rem 1.25rem;
+  position: fixed;
+  inset-block-start: calc(3.65rem + env(safe-area-inset-top, 0px));
+  inset-inline-end: 0.75rem;
+  z-index: 95;
+  margin: 0;
+  padding: 0.6rem 1rem;
   border-radius: var(--radius-md);
   border: 2px solid var(--rose);
   background-color: var(--butter);
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
@@ -414,12 +439,18 @@ p {
 }
 
 .hidden-sections-bar {
+  position: fixed;
+  inset-block-start: calc(3.65rem + env(safe-area-inset-top, 0px));
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  max-width: min(94vw, 48rem);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.15rem;
-  margin-block-end: 1.5rem;
+  padding: 0.65rem 1rem;
+  margin: 0;
   border-radius: var(--radius-md);
   border: 2px dashed var(--rose);
   background-color: var(--cream);

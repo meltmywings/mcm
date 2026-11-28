@@ -161,6 +161,10 @@ function syncBodyMagMode(): void {
   const activeTabBtn = document.querySelector<HTMLButtonElement>('.tab-btn[aria-selected="true"]');
   const isContentTab = (activeTabBtn?.dataset.tab ?? 'content') === 'content';
   document.body.classList.toggle('is-live-mag-active', isAuthenticated && isContentTab);
+  const addPageBtn = document.getElementById('add-custom-section-top');
+  if (addPageBtn) {
+    addPageBtn.hidden = !isAuthenticated || !isContentTab;
+  }
 }
 
 async function persistCmsPatch(
@@ -183,6 +187,9 @@ function setAuthenticatedUi(authenticated: boolean): void {
   const authGate = document.getElementById('auth-gate');
   const workspace = document.getElementById('admin-workspace');
   const logoutBtn = document.getElementById('logout-btn');
+  const headerTabs = document.getElementById('admin-header-tabs');
+  const toggleHiddenBtn = document.getElementById('toggle-hidden-bar-btn');
+  const hiddenBar = document.getElementById('hidden-sections-bar');
   const passcodeInput = document.getElementById('studio-passcode') as HTMLInputElement | null;
 
   if (authGate) authGate.hidden = authenticated;
@@ -197,6 +204,9 @@ function setAuthenticatedUi(authenticated: boolean): void {
       workspace.setAttribute('aria-hidden', 'true');
     }
   }
+  if (headerTabs) headerTabs.hidden = !authenticated;
+  if (!authenticated && toggleHiddenBtn) toggleHiddenBtn.hidden = true;
+  if (!authenticated && hiddenBar) hiddenBar.hidden = true;
   if (logoutBtn) logoutBtn.hidden = !authenticated;
   if (!authenticated && passcodeInput) {
     passcodeInput.focus();
@@ -432,19 +442,29 @@ function getEffectivePagePhotos(pageKey: string, customIdx = 0): MagazinePhoto[]
 
 function renderVisualEditor(preferredPageId?: string): void {
   const hiddenBar = document.getElementById('hidden-sections-bar');
+  const toggleHiddenBtn = document.getElementById('toggle-hidden-bar-btn');
   const root = document.getElementById('visual-site-editor');
   if (!root) return;
 
   const pausedCampaigns = state.campaigns
     .map((camp, idx) => ({ camp, idx }))
     .filter(({ camp }) => !camp.isActive);
+  const hiddenTotal = state.hiddenSections.length + pausedCampaigns.length;
+
+  if (toggleHiddenBtn) {
+    toggleHiddenBtn.hidden = hiddenTotal === 0;
+    toggleHiddenBtn.textContent = `Hidden (${hiddenTotal})`;
+    toggleHiddenBtn.setAttribute(
+      'aria-expanded',
+      String(Boolean(hiddenBar && !hiddenBar.hidden && hiddenTotal > 0)),
+    );
+  }
 
   if (hiddenBar) {
-    if (state.hiddenSections.length === 0 && pausedCampaigns.length === 0) {
+    if (hiddenTotal === 0) {
       hiddenBar.hidden = true;
       hiddenBar.replaceChildren();
     } else {
-      hiddenBar.hidden = false;
       const hiddenBtns = state.hiddenSections
         .map((sec) =>
           iconBtn('add', `Restore ${SECTION_LABELS[sec]}`, 'restore-section', { section: sec }, `Restore ${SECTION_LABELS[sec]}`),
@@ -1530,9 +1550,22 @@ export async function initAdminApp(): Promise<void> {
     );
   });
 
+  const toggleHiddenBtn = document.getElementById('toggle-hidden-bar-btn');
+  const hiddenBarEl = document.getElementById('hidden-sections-bar');
+  toggleHiddenBtn?.addEventListener('click', () => {
+    if (!hiddenBarEl) return;
+    hiddenBarEl.hidden = !hiddenBarEl.hidden;
+    toggleHiddenBtn.setAttribute('aria-expanded', String(!hiddenBarEl.hidden));
+  });
+
   // #hidden-sections-bar restore controls
-  document.getElementById('hidden-sections-bar')?.addEventListener('click', (e) => {
-    void handleVisualEditorClick(e.target as HTMLElement);
+  hiddenBarEl?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-action]')) {
+      hiddenBarEl.hidden = true;
+      toggleHiddenBtn?.setAttribute('aria-expanded', 'false');
+    }
+    void handleVisualEditorClick(target);
   });
 
   // Client tracking & moderation
