@@ -2064,4 +2064,121 @@ dialog.case-dialog::backdrop {
   color: #be185d;
   white-space: nowrap;
 }
+
+/* Admin Live Magazine Clone Stage & Zero-Flow Overlay Icons (+ / Pencil / Bin) */
+.mag-stage.is-admin-stage {
+  position: relative;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  padding: 0.35rem clamp(0.2rem, 1vw, 1.25rem)
+    calc(var(--mag-pager-actual, var(--mag-pager-h)) + 0.35rem);
+}
+
+.mag-stage.is-admin-stage .mag-pager {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+}
+
+.admin-page-toolbar {
+  position: absolute;
+  top: 0.22rem;
+  right: 0.35rem;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100% - 0.7rem);
+  gap: 0.2rem;
+  pointer-events: none;
+}
+
+.admin-page-toolbar > * {
+  pointer-events: auto;
+}
+
+.admin-el-controls {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
+  padding: 0.1rem 0.18rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(209, 29, 111, 0.45);
+  box-shadow: 0 2px 6px rgba(22, 20, 21, 0.16);
+}
+
+.admin-el-controls.is-sticker-controls {
+  top: 0.2rem;
+  right: 0.2rem;
+}
+
+.admin-el-controls.is-note-sticker-controls {
+  top: auto;
+  bottom: 0.2rem;
+  right: 0.2rem;
+}
+
+.admin-inline-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-inline-chip > .admin-el-controls {
+  top: -0.45rem;
+  right: -0.28rem;
+}
+
+.admin-ticker-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-inline-end: 2.3rem;
+}
+
+.admin-mag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  min-inline-size: 20px;
+  min-block-size: 20px;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+  border: 1px solid #d11d6f;
+  background: #fff4f9;
+  color: #161415;
+  font-family: var(--font-sans);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.admin-mag-btn:hover {
+  background: #f8d98b;
+}
+
+.admin-mag-btn.is-add {
+  background: #f8d98b;
+  border-color: #161415;
+}
+
+.admin-mag-btn.is-add:hover {
+  background: #f4a6c1;
+}
+
+.admin-mag-btn.is-delete:hover {
+  background: #d11d6f;
+  color: #ffffff;
+}
 /* === PHOTOREALISTIC MAGAZINES END === */

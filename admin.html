@@ -18,8 +18,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
   <link rel="stylesheet" href="/src/styles/admin.css" />
 </head>
 
@@ -80,24 +81,24 @@
         </button>
       </nav>
 
-      <!-- Tab 1: Visual Website-Mirrored Editor -->
-      <section class="tab-panel" data-panel="content">
+      <!-- Tab 1: Live Magazine Clone Editor -->
+      <section class="tab-panel admin-mag-panel" data-panel="content">
         <div class="editor-toolbar">
           <p class="editor-hint">
-            Mirrors your live website. Use pencils to edit, bins to delete, and + to add text, buttons, TikToks, or sections.
+            Live Magazine Editor — flip pages just like the main site, and tap +, pencil, or bin icons directly on elements to edit in real time.
           </p>
           <button type="button" id="add-custom-section-top" class="btn btn-primary">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>Add Section</span>
+            <span>Add Page</span>
           </button>
         </div>
 
         <div id="hidden-sections-bar" class="hidden-sections-bar" hidden></div>
 
-        <div id="visual-site-editor" class="visual-site-editor"></div>
+        <div id="visual-site-editor" class="visual-site-editor is-live-magazine"></div>
       </section>
 
       <!-- Tab 2: Clients & Moderation -->

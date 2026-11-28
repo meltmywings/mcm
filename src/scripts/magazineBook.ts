@@ -28,8 +28,8 @@ export interface TopicGroup {
 export interface MagazineBookController {
   getPages: () => MagazinePageMeta[];
   getCurrentIndex: () => number;
-  goToPage: (index: number) => void;
-  goToPageById: (id: string) => boolean;
+  goToPage: (index: number, instant?: boolean) => void;
+  goToPageById: (id: string, instant?: boolean) => boolean;
   nextPage: () => void;
   prevPage: () => void;
   openGlossary: () => void;
@@ -864,7 +864,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     }, 520);
   };
 
-  const goToPage = (targetIndex: number) => {
+  const goToPage = (targetIndex: number, instant = false) => {
     cancelSkipCascade();
     flushPendingSettle();
     const pages = collectPages();
@@ -873,6 +873,11 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     const doubleSpread = isDoubleSpreadViewport();
     const anchor = snapToSpreadAnchor(targetIndex, pages.length, doubleSpread);
     if (anchor === currentIndex && pages[anchor]?.element.classList.contains('is-active-page')) {
+      return;
+    }
+
+    if (instant) {
+      applyActivePageDom(pages, anchor);
       return;
     }
 
@@ -987,7 +992,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     runStep(0);
   };
 
-  const goToPageById = (id: string): boolean => {
+  const goToPageById = (id: string, instant = false): boolean => {
     const cleanId = id.replace(/^#/, '');
     const safeSelectorId =
       typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
@@ -1002,7 +1007,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
         (safeSelectorId ? p.element.querySelector(`#${safeSelectorId}`) !== null : false),
     );
     if (!match) return false;
-    goToPage(match.index);
+    goToPage(match.index, instant);
     return true;
   };
 
@@ -1140,7 +1145,8 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     const el = target instanceof Element ? target : null;
     if (!el) return false;
     return (
-      el.closest('input, textarea, select, label, [contenteditable="true"], .filter-bar') !== null
+      el.closest('input, textarea, select, label, [contenteditable="true"], .filter-bar, [data-action]') !==
+      null
     );
   };
 

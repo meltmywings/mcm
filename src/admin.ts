@@ -1,6 +1,6 @@
 import { DEFAULT_CMS_STATE } from '../api/_lib/defaultState';
+import { mountAdminMagazineClone, type AdminCloneHandle } from './scripts/adminMagazineClone';
 import { initInstallPrompt, registerAppServiceWorker } from './scripts/install';
-import { formatPlatformLabel, safeHref } from './scripts/cmsView';
 import type {
   BuiltinSectionKey,
   CampaignEvent,
@@ -85,7 +85,6 @@ const DEFAULT_NOTE_CUTOUTS: Record<string, string> = {
   directory: '/magazines/cutouts/mag-09.png',
 };
 
-const isCutoutStickerSrc = (src: string): boolean => src.includes('/cutouts/');
 
 const SECTION_LABELS: Record<BuiltinSectionKey, string> = {
   hero: 'Hero Showcase',
@@ -155,20 +154,32 @@ async function apiJson<T>(url: string, init?: RequestInit): Promise<T> {
   return data;
 }
 
+let adminClone: AdminCloneHandle | null = null;
+let isAuthenticated = false;
+
+function syncBodyMagMode(): void {
+  const activeTabBtn = document.querySelector<HTMLButtonElement>('.tab-btn[aria-selected="true"]');
+  const isContentTab = (activeTabBtn?.dataset.tab ?? 'content') === 'content';
+  document.body.classList.toggle('is-live-mag-active', isAuthenticated && isContentTab);
+}
+
 async function persistCmsPatch(
   patch: Partial<Omit<AdminCmsState, 'clients' | 'submissions'>>,
   toastMsg: string,
+  targetPageId?: string,
 ): Promise<void> {
   const updated = await apiJson<Partial<AdminCmsState>>('/api/cms', {
     method: 'PUT',
     body: JSON.stringify(patch),
   });
   Object.assign(state, updated);
-  renderVisualEditor();
+  renderVisualEditor(targetPageId);
   showToast(toastMsg);
 }
 
 function setAuthenticatedUi(authenticated: boolean): void {
+  isAuthenticated = authenticated;
+  syncBodyMagMode();
   const authGate = document.getElementById('auth-gate');
   const workspace = document.getElementById('admin-workspace');
   const logoutBtn = document.getElementById('logout-btn');
@@ -419,584 +430,56 @@ function getEffectivePagePhotos(pageKey: string, customIdx = 0): MagazinePhoto[]
   return DEFAULT_CMS_STATE.pagePhotos[pageKey] ?? [];
 }
 
-function renderPageMediaAndTextStrip(
-  pageKey: string,
-  pageLabel: string,
-  customIdx = 0,
-): string {
-  const photos = getEffectivePagePhotos(pageKey, customIdx);
-  const texts = state.pageTextBlocks[pageKey] ?? [];
-  const noteKey = `note-${pageKey}`;
-  const noteStickers = DEFAULT_NOTE_CUTOUTS[pageKey] ? getEffectivePagePhotos(noteKey, customIdx) : null;
-
-  return `
-    <div class="preview-media-strip">
-      <div class="preview-media-col">
-        <div class="preview-refs-head">
-          <span>Images &amp; Stickers (${escapeHtml(pageLabel)})</span>
-          ${iconBtn('add', `Add image or sticker to ${pageLabel}`, 'add-page-photo', { page: pageKey, 'c-idx': customIdx }, 'Sticker / Image')}
-        </div>
-        <div class="preview-photo-grid">
-          ${
-            photos
-              .map(
-                (ph, idx) => `
-            <div class="preview-photo-card">
-              <img class="preview-photo-thumb" src="${escapeAttr(ph.src)}" alt="" />
-              <div class="preview-photo-meta">
-                <div>
-                  <span class="meta-pill">${isCutoutStickerSrc(ph.src) ? 'Sticker' : 'Image'}</span>
-                  <span class="preview-card-copy">${escapeHtml(ph.caption || 'Magazine Asset')}</span>
-                </div>
-                <div class="action-cluster">
-                  ${iconBtn('edit', `Replace image or sticker on ${pageLabel}`, 'edit-page-photo', { page: pageKey, idx, 'c-idx': customIdx }, 'Replace')}
-                  ${iconBtn('delete', `Remove image or sticker from ${pageLabel}`, 'delete-page-photo', { page: pageKey, idx, 'c-idx': customIdx }, 'Remove')}
-                </div>
-              </div>
-            </div>`,
-              )
-              .join('') || '<p class="preview-card-copy">No images or stickers on this page — click + Sticker / Image to add one.</p>'
-          }
-        </div>
-        ${
-          noteStickers !== null
-            ? `
-        <div class="preview-refs-head" style="margin-top:0.75rem;">
-          <span>Sidebar Note Box Sticker (${escapeHtml(pageLabel)})</span>
-          ${
-            noteStickers.length === 0
-              ? iconBtn('add', `Add sidebar note sticker to ${pageLabel}`, 'add-page-photo', { page: noteKey, 'c-idx': customIdx }, 'Note Sticker')
-              : ''
-          }
-        </div>
-        <div class="preview-photo-grid">
-          ${
-            noteStickers
-              .map(
-                (ph, idx) => `
-            <div class="preview-photo-card">
-              <img class="preview-photo-thumb" src="${escapeAttr(ph.src)}" alt="" />
-              <div class="preview-photo-meta">
-                <span class="meta-pill">Note Sticker</span>
-                <div class="action-cluster">
-                  ${iconBtn('edit', `Replace note sticker on ${pageLabel}`, 'edit-page-photo', { page: noteKey, idx, 'c-idx': customIdx }, 'Replace')}
-                  ${iconBtn('delete', `Remove note sticker from ${pageLabel}`, 'delete-page-photo', { page: noteKey, idx, 'c-idx': customIdx }, 'Remove')}
-                </div>
-              </div>
-            </div>`,
-              )
-              .join('') || '<p class="preview-card-copy">Sidebar note sticker removed — click + Note Sticker to restore or add one.</p>'
-          }
-        </div>`
-            : ''
-        }
-      </div>
-
-      <div class="preview-media-col">
-        <div class="preview-refs-head">
-          <span>Extra Editorial Text (${escapeHtml(pageLabel)})</span>
-          ${iconBtn('add', `Add text block to ${pageLabel}`, 'add-page-text', { page: pageKey }, 'Text')}
-        </div>
-        <div class="preview-text-list">
-          ${
-            texts
-              .map(
-                (tb, idx) => `
-            <div class="preview-text-item">
-              <div class="preview-card-top">
-                <span class="meta-pill">${tb.style === 'pullquote' ? 'Pull Quote' : 'Editorial Column'}</span>
-                <div class="action-cluster">
-                  ${iconBtn('edit', `Edit text block on ${pageLabel}`, 'edit-page-text', { page: pageKey, idx })}
-                  ${iconBtn('delete', `Delete text block on ${pageLabel}`, 'delete-page-text', { page: pageKey, idx })}
-                </div>
-              </div>
-              ${tb.title ? `<strong>${escapeHtml(tb.title)}</strong>` : ''}
-              <p class="preview-card-copy">${escapeHtml(tb.body)}</p>
-            </div>`,
-              )
-              .join('') || '<p class="preview-card-copy">No extra columns added — click + Text to add a column or pull quote.</p>'
-          }
-        </div>
-      </div>
-    </div>`;
-}
-
-/* ==========================================================================
-   Visual Website-Mirrored Rendering
-   ========================================================================== */
-
-function renderRefsBlock(
-  refs: readonly MediaReference[] | undefined,
-  ownerType: 'case' | 'campaign',
-  ownerIdx: number,
-): string {
-  const items = refs ?? [];
-  const rows = items
-    .map(
-      (r, rIdx) => `
-      <div class="preview-ref-row">
-        <a class="preview-ref-link" href="${escapeAttr(safeHref(r.url, '#'))}" target="_blank" rel="noopener noreferrer">
-          ${escapeHtml(formatPlatformLabel(r.platform))}: ${escapeHtml(r.label)}${r.handle ? ` (${escapeHtml(r.handle)})` : ''} ↗
-        </a>
-        <div class="action-cluster">
-          ${iconBtn('edit', `Edit reference ${r.label}`, 'edit-ref', { owner: ownerType, 'owner-idx': ownerIdx, 'ref-idx': rIdx })}
-          ${iconBtn('delete', `Delete reference ${r.label}`, 'delete-ref', { owner: ownerType, 'owner-idx': ownerIdx, 'ref-idx': rIdx })}
-        </div>
-      </div>`,
-    )
-    .join('');
-
-  return `
-    <div class="preview-refs-box">
-      <div class="preview-refs-head">
-        <span>References (TikToks, Reels, Links)</span>
-        ${iconBtn('add', 'Add TikTok or media reference', 'add-ref', { owner: ownerType, 'owner-idx': ownerIdx }, 'Ref')}
-      </div>
-      ${rows || '<p style="font-size:0.8rem;opacity:0.8;">No references attached yet.</p>'}
-    </div>`;
-}
-
-function renderSectionHeaderHtml(options: {
-  eyebrow: string;
-  heading: string;
-  subtitle: string;
-  editAction: string;
-  sectionKey: BuiltinSectionKey;
-  extraControls?: string;
-}): string {
-  return `
-    <div class="preview-section-bar">
-      <div class="preview-section-header">
-        ${options.eyebrow ? `<p class="eyebrow">${escapeHtml(options.eyebrow)}</p>` : ''}
-        <h2 class="preview-section-title">${escapeHtml(options.heading)}</h2>
-        ${options.subtitle ? `<p class="preview-section-subtitle">${escapeHtml(options.subtitle)}</p>` : ''}
-      </div>
-      <div class="action-cluster">
-        ${options.extraControls ?? ''}
-        ${iconBtn('edit', `Edit ${SECTION_LABELS[options.sectionKey]} header`, options.editAction)}
-        ${iconBtn('delete', `Delete ${SECTION_LABELS[options.sectionKey]} section`, 'hide-section', { section: options.sectionKey })}
-      </div>
-    </div>`;
-}
-
-function renderVisualEditor(): void {
+function renderVisualEditor(preferredPageId?: string): void {
   const hiddenBar = document.getElementById('hidden-sections-bar');
   const root = document.getElementById('visual-site-editor');
   if (!root) return;
 
+  const pausedCampaigns = state.campaigns
+    .map((camp, idx) => ({ camp, idx }))
+    .filter(({ camp }) => !camp.isActive);
+
   if (hiddenBar) {
-    if (state.hiddenSections.length === 0) {
+    if (state.hiddenSections.length === 0 && pausedCampaigns.length === 0) {
       hiddenBar.hidden = true;
       hiddenBar.replaceChildren();
     } else {
       hiddenBar.hidden = false;
+      const hiddenBtns = state.hiddenSections
+        .map((sec) =>
+          iconBtn('add', `Restore ${SECTION_LABELS[sec]}`, 'restore-section', { section: sec }, `Restore ${SECTION_LABELS[sec]}`),
+        )
+        .join('');
+      const pausedBtns = pausedCampaigns
+        .map(({ camp, idx }) =>
+          iconBtn('add', `Resume paused campaign ${camp.title}`, 'toggle-campaign', { idx }, `Resume ${camp.title}`),
+        )
+        .join('');
       hiddenBar.innerHTML = `
-        <strong>Deleted / Hidden Sections:</strong>
-        ${state.hiddenSections
-          .map((sec) =>
-            iconBtn('add', `Restore ${SECTION_LABELS[sec]}`, 'restore-section', { section: sec }, `Restore ${SECTION_LABELS[sec]}`),
-          )
-          .join('')}
+        ${state.hiddenSections.length > 0 ? `<strong>Hidden Sections:</strong> ${hiddenBtns}` : ''}
+        ${pausedCampaigns.length > 0 ? `<strong>Paused Campaigns:</strong> ${pausedBtns}` : ''}
       `;
     }
   }
 
-  const hidden = new Set(state.hiddenSections);
-  const c = state.siteContent;
-  const blocks: string[] = [];
-
-  // 1. Hero
-  if (!hidden.has('hero')) {
-    blocks.push(`
-      <section class="preview-section tone-blush" data-admin-section="hero">
-        <div class="preview-section-bar">
-          <span class="eyebrow">Hero Showcase</span>
-          <div class="action-cluster">
-            ${iconBtn('edit', 'Edit hero title & subtitle', 'edit-hero')}
-            ${iconBtn('delete', 'Delete Hero section', 'hide-section', { section: 'hero' })}
-          </div>
-        </div>
-        <div class="preview-hero-box">
-          <h2 class="preview-hero-title">${escapeHtml(c.brandTitle)}</h2>
-          <p class="preview-hero-subtitle">${escapeHtml(c.brandSubtitle)}</p>
-          <div class="preview-hero-actions">
-            ${state.heroButtons
-              .map(
-                (btn, idx) => `
-              <div class="editable-chip">
-                <span class="btn btn-sm ${btn.variant === 'primary' ? 'btn-primary' : 'btn-secondary'}">${escapeHtml(btn.label)}</span>
-                ${iconBtn('edit', `Edit button ${btn.label}`, 'edit-hero-btn', { idx })}
-                ${iconBtn('delete', `Delete button ${btn.label}`, 'delete-hero-btn', { idx })}
-              </div>`,
-              )
-              .join('')}
-            ${iconBtn('add', 'Add hero button', 'add-hero-btn', {}, 'Button')}
-          </div>
-        </div>
-        ${renderPageMediaAndTextStrip('cover', 'Cover Page')}
-      </section>`);
+  let preservedPageId = preferredPageId;
+  if (!preservedPageId && adminClone?.controller) {
+    const pages = adminClone.controller.getPages();
+    const curPage = pages[adminClone.controller.getCurrentIndex()];
+    if (curPage) {
+      preservedPageId = curPage.element.dataset.magContinuationOf || curPage.id;
+    }
   }
 
-  // 2. Metrics
-  if (!hidden.has('metrics')) {
-    blocks.push(`
-      <section class="preview-section" data-admin-section="metrics">
-        <div class="preview-section-bar">
-          <span class="eyebrow">Page 01 · Impact Metrics Strip</span>
-          <div class="action-cluster">
-            ${iconBtn('add', 'Add metric', 'add-metric', {}, 'Metric')}
-            ${iconBtn('delete', 'Delete Metrics section', 'hide-section', { section: 'metrics' })}
-          </div>
-        </div>
-        <div class="preview-metrics-grid">
-          ${state.metrics
-            .map(
-              (m, idx) => `
-            <div class="preview-metric-card">
-              <div class="preview-card-top">
-                <span class="preview-metric-value">${escapeHtml(m.value)}</span>
-                <div class="action-cluster">
-                  ${iconBtn('edit', `Edit metric ${m.label}`, 'edit-metric', { idx })}
-                  ${iconBtn('delete', `Delete metric ${m.label}`, 'delete-metric', { idx })}
-                </div>
-              </div>
-              <p class="preview-card-copy">${escapeHtml(m.label)}</p>
-            </div>`,
-            )
-            .join('')}
-        </div>
-        ${renderPageMediaAndTextStrip('metrics', 'Page 01: Impact & Pulse')}
-      </section>`);
-  }
-
-  // 3. Ticker
-  if (!hidden.has('ticker')) {
-    blocks.push(`
-      <section class="preview-section" data-admin-section="ticker">
-        <div class="preview-section-bar">
-          <span class="eyebrow">Capabilities Ticker</span>
-          <div class="action-cluster">
-            ${iconBtn('add', 'Add ticker item', 'add-ticker', {}, 'Ticker Item')}
-            ${iconBtn('delete', 'Delete Ticker section', 'hide-section', { section: 'ticker' })}
-          </div>
-        </div>
-        <div class="preview-ticker-band">
-          ${state.tickerItems
-            .map(
-              (item, idx) => `
-            <span class="preview-ticker-pill">
-              <span>${escapeHtml(item)}</span>
-              ${iconBtn('edit', `Edit ticker ${item}`, 'edit-ticker', { idx })}
-              ${iconBtn('delete', `Delete ticker ${item}`, 'delete-ticker', { idx })}
-            </span>`,
-            )
-            .join('')}
-        </div>
-      </section>`);
-  }
-
-  // 4. Case Studies
-  if (!hidden.has('work')) {
-    blocks.push(`
-      <section class="preview-section tone-blush" data-admin-section="work">
-        ${renderSectionHeaderHtml({
-          eyebrow: c.workEyebrow || 'Cover Stories',
-          heading: c.workHeading,
-          subtitle: c.workSubtitle,
-          editAction: 'edit-work-header',
-          sectionKey: 'work',
-          extraControls: iconBtn('add', 'Add case study', 'add-case', {}, 'Case Study'),
-        })}
-        <div class="preview-grid">
-          ${state.caseStudies
-            .map(
-              (study, idx) => `
-            <article class="preview-card">
-              <div>
-                <div class="preview-card-top">
-                  <span class="meta-pill">${escapeHtml(study.channelLabel)} · ${escapeHtml(study.sector)}</span>
-                  <div class="action-cluster">
-                    ${iconBtn('edit', `Edit case study ${study.client}`, 'edit-case', { idx })}
-                    ${iconBtn('delete', `Delete case study ${study.client}`, 'delete-case', { idx })}
-                  </div>
-                </div>
-                <h3 class="preview-card-title" style="margin-block-start:0.65rem;">${escapeHtml(study.client)}</h3>
-                <p class="preview-card-copy" style="margin-block-start:0.35rem;">${escapeHtml(study.summary)}</p>
-                ${renderRefsBlock(study.references, 'case', idx)}
-              </div>
-              <div class="preview-metrics-line">
-                <span>${escapeHtml(study.headlineMetric)}</span>
-                <span>${escapeHtml(study.secondaryMetric)}</span>
-              </div>
-            </article>`,
-            )
-            .join('')}
-        </div>
-        ${renderPageMediaAndTextStrip('work', 'Ch. 02: Cover Stories I')}
-        ${renderPageMediaAndTextStrip('work-2', 'Ch. 03: Cover Stories II')}
-      </section>`);
-  }
-
-  // 5. Campaigns & Events
-  if (!hidden.has('events')) {
-    blocks.push(`
-      <section class="preview-section" data-admin-section="events">
-        ${renderSectionHeaderHtml({
-          eyebrow: c.eventsEyebrow || 'On Now',
-          heading: c.eventsHeading || 'Live Campaigns & Events.',
-          subtitle: c.eventsSubtitle || '',
-          editAction: 'edit-events-header',
-          sectionKey: 'events',
-          extraControls: iconBtn('add', 'Add campaign or event', 'add-campaign', {}, 'Campaign / Event'),
-        })}
-        <div class="preview-grid">
-          ${state.campaigns
-            .map(
-              (camp, idx) => `
-            <article class="preview-card">
-              <div>
-                <div class="preview-card-top">
-                  <button type="button" class="meta-pill" data-action="toggle-campaign" data-idx="${idx}" style="cursor:pointer;">
-                    ${escapeHtml(camp.kind)} · ${camp.isActive ? 'LIVE ✦' : 'DRAFT (Click to go live)'}
-                  </button>
-                  <div class="action-cluster">
-                    ${iconBtn('edit', `Edit campaign ${camp.title}`, 'edit-campaign', { idx })}
-                    ${iconBtn('delete', `Delete campaign ${camp.title}`, 'delete-campaign', { idx })}
-                  </div>
-                </div>
-                <h3 class="preview-card-title" style="margin-block-start:0.65rem;">${escapeHtml(camp.title)}</h3>
-                <p class="preview-card-copy" style="margin-block-start:0.2rem;">${escapeHtml(camp.dateLabel)} · ${escapeHtml(camp.location)}</p>
-                <p class="preview-card-copy" style="margin-block-start:0.45rem;">${escapeHtml(camp.description)}</p>
-                ${renderRefsBlock(camp.references, 'campaign', idx)}
-              </div>
-              <div>
-                <span class="btn btn-sm btn-secondary">${escapeHtml(camp.ctaLabel)} (${escapeHtml(camp.ctaHref)})</span>
-              </div>
-            </article>`,
-            )
-            .join('')}
-        </div>
-        ${renderPageMediaAndTextStrip('events', 'Page 03: Live Campaigns')}
-      </section>`);
-  }
-
-  // 6. Services / Capabilities
-  if (!hidden.has('services')) {
-    blocks.push(`
-      <section class="preview-section" data-admin-section="services">
-        ${renderSectionHeaderHtml({
-          eyebrow: c.servicesEyebrow || 'Capabilities',
-          heading: c.servicesHeading,
-          subtitle: c.servicesSubtitle || '',
-          editAction: 'edit-services-header',
-          sectionKey: 'services',
-          extraControls: iconBtn('add', 'Add capability card', 'add-service', {}, 'Service'),
-        })}
-        <div class="preview-grid">
-          ${state.services
-            .map(
-              (srv, idx) => `
-            <article class="preview-card">
-              <div>
-                <div class="preview-card-top">
-                  <span class="meta-pill">${escapeHtml(srv.number)}</span>
-                  <div class="action-cluster">
-                    ${iconBtn('edit', `Edit service ${srv.title}`, 'edit-service', { idx })}
-                    ${iconBtn('delete', `Delete service ${srv.title}`, 'delete-service', { idx })}
-                  </div>
-                </div>
-                <h3 class="preview-card-title" style="margin-block-start:0.65rem;">${escapeHtml(srv.title)}</h3>
-                <p class="preview-card-copy" style="margin-block-start:0.25rem;"><strong>${escapeHtml(srv.tagline)}</strong></p>
-                <p class="preview-card-copy" style="margin-block-start:0.35rem;">${escapeHtml(srv.description)}</p>
-              </div>
-              <ul style="margin:0;padding-inline-start:1.1rem;font-size:0.85rem;font-weight:700;">
-                ${srv.outcomes.map((o) => `<li>${escapeHtml(o)}</li>`).join('')}
-              </ul>
-            </article>`,
-            )
-            .join('')}
-        </div>
-        ${renderPageMediaAndTextStrip('services', 'Ch. 05: Capabilities I')}
-        ${renderPageMediaAndTextStrip('services-2', 'Ch. 06: Capabilities II')}
-      </section>`);
-  }
-
-  // 7. Culture Lab & Quote
-  if (!hidden.has('culture-lab')) {
-    blocks.push(`
-      <section class="preview-section tone-lilac" data-admin-section="culture-lab">
-        ${renderSectionHeaderHtml({
-          eyebrow: c.cultureEyebrow || 'Culture Lab',
-          heading: c.cultureHeading || 'How we turn attention into icon status.',
-          subtitle: c.cultureSubtitle || '',
-          editAction: 'edit-culture-header',
-          sectionKey: 'culture-lab',
-          extraControls: iconBtn('add', 'Add process step', 'add-step', {}, 'Step'),
-        })}
-        <div class="preview-grid">
-          ${state.processSteps
-            .map(
-              (step, idx) => `
-            <article class="preview-card">
-              <div class="preview-card-top">
-                <span class="preview-metric-value">${escapeHtml(step.step)}</span>
-                <div class="action-cluster">
-                  ${iconBtn('edit', `Edit step ${step.title}`, 'edit-step', { idx })}
-                  ${iconBtn('delete', `Delete step ${step.title}`, 'delete-step', { idx })}
-                </div>
-              </div>
-              <h3 class="preview-card-title">${escapeHtml(step.title)}</h3>
-              <p class="preview-card-copy">${escapeHtml(step.description)}</p>
-            </article>`,
-            )
-            .join('')}
-        </div>
-        <div class="preview-quote-block">
-          <div class="preview-card-top">
-            <span class="eyebrow">Featured Client Quote</span>
-            ${iconBtn('edit', 'Edit Culture Lab quote', 'edit-quote')}
-          </div>
-          <p class="preview-quote-text">${escapeHtml(c.cultureQuote)}</p>
-          <p class="preview-card-copy">${escapeHtml(c.cultureQuoteAuthor)}</p>
-        </div>
-        ${renderPageMediaAndTextStrip('culture-lab', 'Page 05: Culture Lab')}
-      </section>`);
-  }
-
-  // 8. FAQ
-  if (!hidden.has('faq')) {
-    blocks.push(`
-      <section class="preview-section tone-blush" data-admin-section="faq">
-        ${renderSectionHeaderHtml({
-          eyebrow: c.faqEyebrow || 'FAQ',
-          heading: c.faqHeading || 'Working with the studio.',
-          subtitle: c.faqSubtitle || '',
-          editAction: 'edit-faq-header',
-          sectionKey: 'faq',
-          extraControls: iconBtn('add', 'Add FAQ item', 'add-faq', {}, 'FAQ'),
-        })}
-        <div class="preview-faq-list">
-          ${state.faqs
-            .map(
-              (faq, idx) => `
-            <div class="preview-faq-item">
-              <div class="preview-card-top">
-                <strong>${escapeHtml(faq.question)}</strong>
-                <div class="action-cluster">
-                  ${iconBtn('edit', `Edit FAQ ${faq.question}`, 'edit-faq', { idx })}
-                  ${iconBtn('delete', `Delete FAQ ${faq.question}`, 'delete-faq', { idx })}
-                </div>
-              </div>
-              <p class="preview-card-copy">${escapeHtml(faq.answer)}</p>
-            </div>`,
-            )
-            .join('')}
-        </div>
-        ${renderPageMediaAndTextStrip('faq', 'Ch. 08: Studio Q&A I')}
-        ${renderPageMediaAndTextStrip('faq-2', 'Ch. 09: Studio Q&A II')}
-      </section>`);
-  }
-
-  // 9. Custom Creative Sections
-  state.customSections.forEach((sec, sIdx) => {
-    blocks.push(`
-      <section class="preview-section" data-admin-custom-section="${escapeAttr(sec.id)}">
-        <div class="preview-section-bar">
-          <div class="preview-section-header">
-            ${sec.eyebrow ? `<p class="eyebrow">${escapeHtml(sec.eyebrow)}</p>` : ''}
-            <h2 class="preview-section-title">${escapeHtml(sec.heading || 'Custom Section')}</h2>
-            ${sec.subtitle ? `<p class="preview-section-subtitle">${escapeHtml(sec.subtitle)}</p>` : ''}
-          </div>
-          <div class="action-cluster">
-            ${iconBtn('add', 'Add text block', 'add-custom-el', { 's-idx': sIdx, kind: 'text' }, 'Text')}
-            ${iconBtn('add', 'Add button', 'add-custom-el', { 's-idx': sIdx, kind: 'button' }, 'Button')}
-            ${iconBtn('add', 'Add TikTok or media reference', 'add-custom-el', { 's-idx': sIdx, kind: 'reference' }, 'TikTok / Ref')}
-            ${iconBtn('edit', `Edit section ${sec.heading}`, 'edit-custom-section', { 's-idx': sIdx })}
-            ${iconBtn('delete', `Delete entire section ${sec.heading}`, 'delete-custom-section', { 's-idx': sIdx })}
-          </div>
-        </div>
-        <div class="preview-grid">
-          ${sec.elements
-            .map((el, eIdx) => {
-              if (el.type === 'text') {
-                return `
-                  <article class="preview-card">
-                    <div>
-                      <div class="preview-card-top">
-                        <span class="meta-pill">Text Block</span>
-                        <div class="action-cluster">
-                          ${iconBtn('edit', 'Edit text block', 'edit-custom-el', { 's-idx': sIdx, 'e-idx': eIdx })}
-                          ${iconBtn('delete', 'Delete text block', 'delete-custom-el', { 's-idx': sIdx, 'e-idx': eIdx })}
-                        </div>
-                      </div>
-                      ${el.title ? `<h3 class="preview-card-title" style="margin-block-start:0.65rem;">${escapeHtml(el.title)}</h3>` : ''}
-                      <p class="preview-card-copy" style="margin-block-start:0.35rem;">${escapeHtml(el.body)}</p>
-                    </div>
-                  </article>`;
-              }
-              if (el.type === 'button') {
-                return `
-                  <article class="preview-card">
-                    <div class="preview-card-top">
-                      <span class="meta-pill">Button Element</span>
-                      <div class="action-cluster">
-                        ${iconBtn('edit', `Edit button ${el.label}`, 'edit-custom-el', { 's-idx': sIdx, 'e-idx': eIdx })}
-                        ${iconBtn('delete', `Delete button ${el.label}`, 'delete-custom-el', { 's-idx': sIdx, 'e-idx': eIdx })}
-                      </div>
-                    </div>
-                    <div>
-                      <span class="btn btn-sm ${el.variant === 'primary' ? 'btn-primary' : 'btn-secondary'}">${escapeHtml(el.label)}</span>
-                      <p class="preview-card-copy" style="margin-block-start:0.4rem;">Link: ${escapeHtml(el.href)}</p>
-                    </div>
-                  </article>`;
-              }
-              return `
-                <article class="preview-card">
-                  <div>
-                    <div class="preview-card-top">
-                      <span class="eyebrow">${escapeHtml(formatPlatformLabel(el.platform))}</span>
-                      <div class="action-cluster">
-                        ${iconBtn('edit', `Edit reference ${el.title}`, 'edit-custom-el', { 's-idx': sIdx, 'e-idx': eIdx })}
-                        ${iconBtn('delete', `Delete reference ${el.title}`, 'delete-custom-el', { 's-idx': sIdx, 'e-idx': eIdx })}
-                      </div>
-                    </div>
-                    <h3 class="preview-card-title" style="margin-block-start:0.65rem;">${escapeHtml(el.title)}</h3>
-                    ${el.handle ? `<p class="preview-card-copy">${escapeHtml(el.handle)}</p>` : ''}
-                    ${el.caption ? `<p class="preview-card-copy" style="margin-block-start:0.35rem;">${escapeHtml(el.caption)}</p>` : ''}
-                  </div>
-                  <div>
-                    <a class="btn btn-sm btn-secondary" href="${escapeAttr(safeHref(el.url, '#'))}" target="_blank" rel="noopener noreferrer">
-                      Open ${escapeHtml(formatPlatformLabel(el.platform))} ↗
-                    </a>
-                  </div>
-                </article>`;
-            })
-            .join('') || '<p class="preview-card-copy">No elements yet — click + Text, + Button, or + TikTok / Ref above.</p>'}
-        </div>
-        ${renderPageMediaAndTextStrip(`custom-${sec.id}`, sec.heading || 'Custom Page', sIdx)}
-      </section>`);
-  });
-
-  // 10. Brief Section
-  if (!hidden.has('brief')) {
-    blocks.push(`
-      <section class="preview-section tone-sky" data-admin-section="brief">
-        ${renderSectionHeaderHtml({
-          eyebrow: c.briefEyebrow || 'Start a Project',
-          heading: c.briefHeading || 'Put your brand in the spotlight.',
-          subtitle: c.briefSubtitle || '',
-          editAction: 'edit-brief-header',
-          sectionKey: 'brief',
-        })}
-        <div>
-          <span class="btn btn-primary">${escapeHtml(c.briefSubmitLabel || 'Launch Your Brief')}</span>
-        </div>
-        ${renderPageMediaAndTextStrip('brief', 'Ch. 10: Start a Brief')}
-        ${renderPageMediaAndTextStrip('directory', 'Ch. 11: Studio Directory')}
-      </section>`);
-  }
-
-  root.innerHTML = blocks.join('');
+  adminClone?.destroy();
+  adminClone = mountAdminMagazineClone(
+    root,
+    state,
+    (el) => {
+      void handleVisualEditorClick(el);
+    },
+    preservedPageId,
+  );
 }
 
 /* ==========================================================================
@@ -1966,6 +1449,10 @@ export async function initAdminApp(): Promise<void> {
       document.querySelectorAll<HTMLElement>('.tab-panel').forEach((panel) => {
         panel.hidden = panel.dataset.panel !== target;
       });
+      syncBodyMagMode();
+      if (target === 'content') {
+        adminClone?.controller?.refresh();
+      }
     });
   });
 
@@ -2036,16 +1523,14 @@ export async function initAdminApp(): Promise<void> {
         };
         await persistCmsPatch(
           { customSections: [...state.customSections, nextSection] },
-          'New section added — use + Text, + Button, or + TikTok / Ref to populate it.',
+          'New page added — use + Text, + Btn, or + Link on the page bar to populate it.',
+          `custom-${nextSection.id}`,
         );
       },
     );
   });
 
-  // Visual Editor delegation (pencils, bins, plusses)
-  document.getElementById('visual-site-editor')?.addEventListener('click', (e) => {
-    void handleVisualEditorClick(e.target as HTMLElement);
-  });
+  // #hidden-sections-bar restore controls
   document.getElementById('hidden-sections-bar')?.addEventListener('click', (e) => {
     void handleVisualEditorClick(e.target as HTMLElement);
   });

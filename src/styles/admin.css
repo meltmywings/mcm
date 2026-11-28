@@ -31,7 +31,10 @@ body {
   margin: 0;
   width: 100%;
   max-width: 100%;
+  height: auto;
+  min-height: 100dvh;
   overflow-x: clip;
+  overflow-y: auto;
   background-color: var(--blush);
   color: var(--rose);
   font-family: var(--font-sans);
@@ -39,15 +42,65 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+body.is-live-mag-active {
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.is-live-mag-active .admin-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.is-live-mag-active #admin-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+body.is-live-mag-active .tab-bar {
+  padding-inline: 0.75rem;
+  padding-block-start: 0.35rem;
+  margin-block-end: 0;
+  flex-shrink: 0;
+}
+
+body.is-live-mag-active .admin-mag-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+body.is-live-mag-active .editor-toolbar,
+body.is-live-mag-active .hidden-sections-bar {
+  margin-inline: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  flex-shrink: 0;
+}
+
+body.is-live-mag-active .visual-site-editor.is-live-magazine {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 body {
   padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
   padding-block-end: env(safe-area-inset-bottom, 0px);
 }
 
-h1,
-h2,
-h3,
-h4 {
+:where(h1, h2, h3, h4):not(#admin-mag-stage *) {
   font-family: var(--font-display);
   margin: 0;
   color: var(--rose);
@@ -102,7 +155,7 @@ p {
   padding: 1.5rem 1rem 3.5rem;
 }
 
-.eyebrow {
+.eyebrow:not(#admin-mag-stage *) {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -117,12 +170,12 @@ p {
   color: var(--rose);
 }
 
-.eyebrow::before {
+.eyebrow:not(#admin-mag-stage *)::before {
   content: '✦';
   color: var(--rose);
 }
 
-.btn {
+.btn:not(#admin-mag-stage *) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -138,22 +191,22 @@ p {
   cursor: pointer;
 }
 
-.btn-primary {
+.btn-primary:not(#admin-mag-stage *) {
   background-color: var(--rose);
   color: var(--blush);
 }
 
-.btn-primary:hover {
+.btn-primary:not(#admin-mag-stage *):hover {
   background-color: var(--butter);
   color: var(--rose);
 }
 
-.btn-secondary {
+.btn-secondary:not(#admin-mag-stage *) {
   background-color: var(--cream);
   color: var(--rose);
 }
 
-.btn-secondary:hover {
+.btn-secondary:not(#admin-mag-stage *):hover {
   background-color: var(--sky);
 }
 
@@ -709,18 +762,18 @@ dialog.editor-dialog::backdrop {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 }
 
-.field {
+.field:not(#admin-mag-stage *) {
   display: grid;
   gap: 0.3rem;
 }
 
-.field label {
+.field:not(#admin-mag-stage *) label {
   font-weight: 700;
   font-size: 0.875rem;
 }
 
-.field input,
-.field textarea,
+.field:not(#admin-mag-stage *) input,
+.field:not(#admin-mag-stage *) textarea,
 .select-input,
 .select-pill {
   font: inherit;
