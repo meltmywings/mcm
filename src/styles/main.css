@@ -906,7 +906,8 @@ body {
   align-items: center;
 }
 
-.mag-ref-mini-trio img {
+.mag-ref-mini-trio img,
+.mag-ref-mini-trio .mag-trio-slot img {
   width: 100%;
   aspect-ratio: 3 / 4.2;
   object-fit: cover;
@@ -915,18 +916,36 @@ body {
   filter: drop-shadow(0 3px 6px rgba(24, 14, 20, 0.2));
 }
 
-.mag-ref-mini-trio img:nth-child(1) {
-  transform: rotate(-4deg);
+.mag-ref-mini-trio .mag-trio-slot {
+  position: relative;
+  margin: 0;
+  display: block;
+}
+
+.mag-ref-mini-trio > :nth-child(1) {
+  transform: translate3d(var(--el-tx, 0px), var(--el-ty, 0px), 0) rotate(-4deg) scale(var(--el-scale, 1));
+}
+
+.mag-ref-mini-trio > img:nth-child(1),
+.mag-ref-mini-trio > .mag-trio-slot:nth-child(1) img {
   clip-path: polygon(4% 4%, 95% 2%, 98% 96%, 2% 94%);
 }
 
-.mag-ref-mini-trio img:nth-child(2) {
-  transform: rotate(2deg);
+.mag-ref-mini-trio > :nth-child(2) {
+  transform: translate3d(var(--el-tx, 0px), var(--el-ty, 0px), 0) rotate(2deg) scale(var(--el-scale, 1));
+}
+
+.mag-ref-mini-trio > img:nth-child(2),
+.mag-ref-mini-trio > .mag-trio-slot:nth-child(2) img {
   clip-path: polygon(2% 2%, 97% 5%, 95% 98%, 5% 95%);
 }
 
-.mag-ref-mini-trio img:nth-child(3) {
-  transform: rotate(4deg);
+.mag-ref-mini-trio > :nth-child(3) {
+  transform: translate3d(var(--el-tx, 0px), var(--el-ty, 0px), 0) rotate(4deg) scale(var(--el-scale, 1));
+}
+
+.mag-ref-mini-trio > img:nth-child(3),
+.mag-ref-mini-trio > .mag-trio-slot:nth-child(3) img {
   clip-path: polygon(5% 3%, 98% 4%, 94% 96%, 3% 97%);
 }
 
@@ -2103,6 +2122,133 @@ dialog.case-dialog::backdrop {
   pointer-events: auto;
 }
 
+.mag-stage.is-admin-stage .mag-cover-overlay {
+  pointer-events: none;
+}
+
+.mag-stage.is-admin-stage .mag-cover-overlay > *,
+.mag-stage.is-admin-stage .mag-cover-masthead-block,
+.mag-stage.is-admin-stage .mag-coverline-link,
+.mag-stage.is-admin-stage .hero-actions,
+.mag-stage.is-admin-stage .mag-cover-nav-actions,
+.mag-stage.is-admin-stage .admin-el-controls {
+  pointer-events: auto;
+}
+
+.mag-stage.is-admin-stage .mag-photo-figure.is-cover-photo > .admin-el-controls {
+  top: 0.35rem;
+  left: 0.35rem;
+  right: auto;
+  z-index: 26;
+}
+
+.mag-note-cutout-host {
+  position: relative;
+  float: right;
+  width: 45%;
+  margin: 0.15rem -0.1rem 0.1rem 0.3rem;
+}
+
+.mag-note-cutout-host > .mag-note-cutout {
+  float: none;
+  width: 100%;
+  margin: 0;
+  display: block;
+}
+
+.mag-note-cutout-host.is-empty-cutout {
+  float: right;
+  width: auto;
+  margin: 0 0 0.25rem 0.35rem;
+}
+
+.mag-trio-slot > .admin-el-controls {
+  top: 0.1rem;
+  right: 0.1rem;
+  padding: 0.08rem 0.14rem;
+}
+
+[data-layout-key].has-el-layout,
+[data-layout-key].is-reposition-active {
+  position: relative;
+  transform-origin: center center;
+  transform: translate3d(var(--el-tx, 0px), var(--el-ty, 0px), 0) scale(var(--el-scale, 1));
+}
+
+[data-layout-key].is-reposition-active {
+  outline: 2px dashed #d11d6f;
+  outline-offset: 3px;
+  border-radius: 6px;
+  z-index: 42 !important;
+  cursor: grab;
+  touch-action: none !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+[data-layout-key].is-reposition-active * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.admin-resize-corner {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: #d11d6f;
+  box-shadow: 0 2px 8px rgba(22, 20, 21, 0.32);
+  cursor: nwse-resize;
+  touch-action: none;
+  z-index: 45;
+  padding: 0;
+}
+
+.admin-reposition-hud {
+  position: absolute;
+  top: 0.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1.5px solid #d11d6f;
+  box-shadow: 0 8px 24px rgba(22, 20, 21, 0.22);
+  color: #161415;
+  font-size: 0.68rem;
+  max-width: min(94vw, 38rem);
+}
+
+.admin-reposition-title {
+  font-weight: 800;
+  color: #d11d6f;
+}
+
+.admin-reposition-hint {
+  opacity: 0.78;
+}
+
+.admin-reposition-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+}
+
+.admin-reposition-scale {
+  min-width: 2.3rem;
+  text-align: center;
+  font-weight: 700;
+}
+
 .admin-el-controls {
   position: absolute;
   top: 0.15rem;
@@ -2144,7 +2290,7 @@ dialog.case-dialog::backdrop {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding-inline-end: 2.3rem;
+  padding-inline-end: 3.4rem;
 }
 
 .admin-mag-btn {

@@ -14,6 +14,7 @@ import {
   type CampaignEvent,
   type CaseStudy,
   type CustomSection,
+  type ElementLayout,
   type FaqItem,
   type HeroButton,
   type MagazinePhoto,
@@ -22,11 +23,14 @@ import {
   type ProcessStep,
   type ServicePillar,
   type SiteContent,
+  type TextOverride,
 } from './data/agency';
 import { initFaq } from './scripts/faq';
 import {
+  applyElementLayouts,
   applyHiddenSections,
   applySiteContent,
+  applyTextOverrides,
   renderCampaigns,
   renderCustomSections,
   renderHeroButtons,
@@ -79,6 +83,8 @@ async function hydrateFromCms(
       hiddenSections?: BuiltinSectionKey[];
       pagePhotos?: Record<string, MagazinePhoto[]>;
       pageTextBlocks?: Record<string, PageTextBlock[]>;
+      textOverrides?: Record<string, TextOverride>;
+      elementLayouts?: Record<string, ElementLayout>;
     };
 
     let layoutChanged = false;
@@ -148,6 +154,13 @@ async function hydrateFromCms(
     if (Array.isArray(data.hiddenSections) && data.hiddenSections.length > 0) {
       applyHiddenSections(root, data.hiddenSections);
       layoutChanged = true;
+    }
+    if (data.textOverrides && Object.keys(data.textOverrides).length > 0) {
+      applyTextOverrides(root, data.textOverrides);
+      layoutChanged = true;
+    }
+    if (data.elementLayouts && Object.keys(data.elementLayouts).length > 0) {
+      applyElementLayouts(root, data.elementLayouts);
     }
 
     if (layoutChanged) {

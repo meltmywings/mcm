@@ -1117,7 +1117,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     ) {
       return;
     }
-    if (glossaryDialog?.open) return;
+    if (glossaryDialog?.open || book.classList.contains('is-repositioning-element')) return;
     if (e.key === 'ArrowRight') {
       nextPage();
     } else if (e.key === 'ArrowLeft') {
@@ -1148,14 +1148,21 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     const el = target instanceof Element ? target : null;
     if (!el) return false;
     return (
-      el.closest('input, textarea, select, label, [contenteditable="true"], .filter-bar, [data-action]') !==
-      null
+      el.closest(
+        'input, textarea, select, label, [contenteditable="true"], .filter-bar, [data-action], .is-reposition-active, .admin-el-controls, .admin-page-toolbar, .admin-reposition-hud, [data-resize-corner]',
+      ) !== null
     );
   };
 
   const handlePointerDown = (e: PointerEvent) => {
     if (!e.isPrimary || (e.button !== undefined && e.button !== 0)) return;
-    if (glossaryDialog?.open || isNonSwipeFormControl(e.target)) return;
+    if (
+      glossaryDialog?.open ||
+      book.classList.contains('is-repositioning-element') ||
+      isNonSwipeFormControl(e.target)
+    ) {
+      return;
+    }
 
     clearSuppressClick();
     cancelSkipCascade();

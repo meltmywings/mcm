@@ -12,6 +12,8 @@ import type {
   ProcessStep,
   ServicePillar,
   SiteContent,
+  TextOverride,
+  ElementLayout,
 } from '../src/types/cms';
 import { isAuthenticated, readJsonBody, sendJson } from './_lib/auth';
 import { loadCmsState, saveCmsState } from './_lib/store';
@@ -39,6 +41,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         hiddenSections: state.hiddenSections,
         pagePhotos: state.pagePhotos,
         pageTextBlocks: state.pageTextBlocks,
+        textOverrides: state.textOverrides ?? {},
+        elementLayouts: state.elementLayouts ?? {},
       });
       return;
     }
@@ -63,6 +67,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         hiddenSections?: BuiltinSectionKey[];
         pagePhotos?: Record<string, MagazinePhoto[]>;
         pageTextBlocks?: Record<string, PageTextBlock[]>;
+        textOverrides?: Record<string, TextOverride>;
+        elementLayouts?: Record<string, ElementLayout>;
       }>(req);
 
       const current = await loadCmsState();
@@ -93,6 +99,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           body.pageTextBlocks && typeof body.pageTextBlocks === 'object'
             ? body.pageTextBlocks
             : current.pageTextBlocks,
+        textOverrides:
+          body.textOverrides && typeof body.textOverrides === 'object'
+            ? body.textOverrides
+            : current.textOverrides ?? {},
+        elementLayouts:
+          body.elementLayouts && typeof body.elementLayouts === 'object'
+            ? body.elementLayouts
+            : current.elementLayouts ?? {},
       });
 
       sendJson(res, 200, {
@@ -109,6 +123,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         hiddenSections: updated.hiddenSections,
         pagePhotos: updated.pagePhotos,
         pageTextBlocks: updated.pageTextBlocks,
+        textOverrides: updated.textOverrides ?? {},
+        elementLayouts: updated.elementLayouts ?? {},
       });
       return;
     }

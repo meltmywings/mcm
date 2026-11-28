@@ -10,6 +10,7 @@ export type {
   CmsState,
   CustomElement,
   CustomSection,
+  ElementLayout,
   FaqItem,
   HeroButton,
   MagazinePhoto,
@@ -22,6 +23,7 @@ export type {
   SiteContent,
   SubmissionRecord,
   SubmissionStatus,
+  TextOverride,
 } from '../types/cms';
 
 export interface BudgetTier {

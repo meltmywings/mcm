@@ -344,6 +344,8 @@ export const DEFAULT_CMS_STATE: CmsState = {
     ],
   },
   pageTextBlocks: {},
+  textOverrides: {},
+  elementLayouts: {},
   clients: [
     {
       id: 'cl-vespera',

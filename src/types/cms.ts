@@ -119,11 +119,28 @@ export interface CaseStudy {
   references?: MediaReference[];
 }
 
+export interface TextOverride {
+  text?: string;
+  title?: string;
+  href?: string;
+  hidden?: boolean;
+}
+
+export interface ElementLayout {
+  x: number;
+  y: number;
+  scale: number;
+}
+
 export interface SiteContent {
+  heroLogoSrc?: string;
   brandTitle: string;
   brandSubtitle: string;
   primaryCtaLabel: string;
   secondaryCtaLabel: string;
+  metricsEyebrow?: string;
+  metricsHeading?: string;
+  metricsSubtitle?: string;
   workEyebrow?: string;
   workHeading: string;
   workSubtitle: string;
@@ -145,6 +162,9 @@ export interface SiteContent {
   briefHeading?: string;
   briefSubtitle?: string;
   briefSubmitLabel?: string;
+  directoryEyebrow?: string;
+  directoryHeading?: string;
+  directorySubtitle?: string;
 }
 
 export type ClientStatus = 'pending' | 'approved' | 'active' | 'paused' | 'flagged';
@@ -203,6 +223,8 @@ export interface CmsState {
   hiddenSections: BuiltinSectionKey[];
   pagePhotos: Record<string, MagazinePhoto[]>;
   pageTextBlocks: Record<string, PageTextBlock[]>;
+  textOverrides?: Record<string, TextOverride>;
+  elementLayouts?: Record<string, ElementLayout>;
   clients: ClientRecord[];
   submissions: SubmissionRecord[];
 }

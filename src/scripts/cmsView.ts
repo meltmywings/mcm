@@ -2,6 +2,7 @@ import type {
   BuiltinSectionKey,
   CampaignEvent,
   CustomSection,
+  ElementLayout,
   HeroButton,
   MagazinePhoto,
   MediaPlatform,
@@ -11,6 +12,7 @@ import type {
   ProcessStep,
   ServicePillar,
   SiteContent,
+  TextOverride,
 } from '../data/agency';
 import { getCutoutShapeOutside } from '../data/cutoutShapes';
 
@@ -285,6 +287,20 @@ const CUSTOM_PAGE_PHOTOS = [
   '/magazines/cutouts/mag-15.png',
 ];
 
+export const DEFAULT_TRIO_PHOTOS: Record<string, string[]> = {
+  metrics: ['/magazines/mag-02.jpg', '/magazines/mag-04.jpg', '/magazines/mag-06.jpg'],
+  work: ['/magazines/mag-01.jpg', '/magazines/mag-08.jpg', '/magazines/mag-15.jpg'],
+  'work-2': ['/magazines/mag-03.jpg', '/magazines/mag-07.jpg', '/magazines/mag-12.jpg'],
+  events: ['/magazines/mag-09.jpg', '/magazines/mag-11.jpg', '/magazines/mag-13.jpg'],
+  services: ['/magazines/mag-01.jpg', '/magazines/mag-04.jpg', '/magazines/mag-11.jpg'],
+  'services-2': ['/magazines/mag-02.jpg', '/magazines/mag-10.jpg', '/magazines/mag-15.jpg'],
+  'culture-lab': ['/magazines/mag-04.jpg', '/magazines/mag-06.jpg', '/magazines/mag-11.jpg'],
+  faq: ['/magazines/mag-01.jpg', '/magazines/mag-03.jpg', '/magazines/mag-10.jpg'],
+  'faq-2': ['/magazines/mag-02.jpg', '/magazines/mag-07.jpg', '/magazines/mag-11.jpg'],
+  brief: ['/magazines/mag-01.jpg', '/magazines/mag-09.jpg', '/magazines/mag-15.jpg'],
+  directory: ['/magazines/mag-01.jpg', '/magazines/mag-04.jpg', '/magazines/mag-12.jpg'],
+};
+
 const CUTOUT_DIMENSIONS: Record<string, [number, number]> = {
   '/magazines/cutouts/mag-01.png': [688, 1032],
   '/magazines/cutouts/mag-02.png': [337, 651],
@@ -386,6 +402,43 @@ export function renderPagePhotos(
       img.removeAttribute('height');
     }
     img.style.shapeOutside = getCutoutShapeOutside(clean, 'right');
+  });
+
+  // Render editable mini-trio editorial snapshots (`trio-<pageKey>`) when customized in CMS
+  root.querySelectorAll<HTMLElement>('.mag-ref-mini-trio').forEach((trio) => {
+    const parentPageEl = trio.closest<HTMLElement>('[data-mag-page]');
+    const pageKey =
+      trio.dataset.pageTrio ||
+      parentPageEl?.dataset.magContinuationOf ||
+      parentPageEl?.dataset.magPage ||
+      '';
+    if (!pageKey) return;
+    trio.dataset.pageTrio = pageKey;
+    const trioKey = `trio-${pageKey}`;
+    if (!Object.prototype.hasOwnProperty.call(pagePhotos, trioKey)) return;
+
+    const items = pagePhotos[trioKey] ?? [];
+    if (items.length === 0) {
+      trio.hidden = true;
+      trio.replaceChildren();
+      return;
+    }
+    trio.hidden = false;
+    trio.replaceChildren(
+      ...items
+        .map((photo) => {
+          const clean = safeImageSrc(photo.src);
+          if (!clean) return null;
+          const img = document.createElement('img');
+          img.src = clean;
+          img.alt = '';
+          img.loading = 'lazy';
+          img.setAttribute('fetchpriority', 'low');
+          img.decoding = 'async';
+          return img;
+        })
+        .filter((el): el is HTMLImageElement => el !== null),
+    );
   });
 }
 
@@ -690,9 +743,16 @@ export function applySiteContent(root: ParentNode, content: Partial<SiteContent>
   if (brandTitleEl && content.brandTitle !== undefined) {
     brandTitleEl.textContent = content.brandTitle;
   }
+  const heroLogoImg = root.querySelector<HTMLImageElement>('#cover .hero-mc-logo');
+  if (heroLogoImg && content.heroLogoSrc !== undefined) {
+    const cleanLogo = safeImageSrc(content.heroLogoSrc) || '/mc-logo.svg';
+    heroLogoImg.src = cleanLogo;
+  }
   setText('#hero-brand-subtitle', content.brandSubtitle);
   setText('#hero-primary-cta', content.primaryCtaLabel);
   setText('#hero-secondary-cta', content.secondaryCtaLabel);
+  setText('#metrics .mag-kicker', content.metricsEyebrow);
+  setText('#metrics .mag-zine-title', content.metricsHeading);
   setText('#work-eyebrow', content.workEyebrow);
   setText('#work-heading', content.workHeading);
   setText('#work-subtitle', content.workSubtitle);
@@ -714,4 +774,170 @@ export function applySiteContent(root: ParentNode, content: Partial<SiteContent>
   setText('#brief-heading', content.briefHeading);
   setText('#brief-subtitle', content.briefSubtitle);
   setText('#brief-submit', content.briefSubmitLabel);
+  setText('#directory .mag-kicker', content.directoryEyebrow);
+  setText('#directory .mag-zine-title', content.directoryHeading);
+}
+
+/**
+ * Deterministically assigns stable layout & text override keys to all editable media and text elements
+ * so reposition/resize and inline text edits render identically on Admin Clone and the live site.
+ */
+export function assignEditableLayoutKeys(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>('[data-mag-page]:not([data-mag-continued="true"])').forEach((pageEl) => {
+    const pageKey = pageEl.dataset.magPage || '';
+    if (!pageKey) return;
+
+    if (pageKey === 'cover') {
+      const coverBg = pageEl.querySelector<HTMLElement>('.mag-photo-figure.is-cover-photo');
+      if (coverBg) coverBg.dataset.layoutKey = 'cover:bg';
+
+      const masthead = pageEl.querySelector<HTMLElement>('.mag-cover-masthead-block');
+      if (masthead) masthead.dataset.layoutKey = 'cover:masthead';
+
+      const heroTitle = pageEl.querySelector<HTMLElement>('.hero-brand-title');
+      if (heroTitle) heroTitle.dataset.layoutKey = 'cover:logo';
+
+      pageEl.querySelectorAll<HTMLElement>('.mag-coverline-link').forEach((link, idx) => {
+        const key = `cover:line:${idx}`;
+        link.dataset.layoutKey = key;
+        link.dataset.textKey = key;
+      });
+
+      pageEl.querySelectorAll<HTMLElement>('#hero-actions > :is(a, .admin-inline-chip)').forEach((cta, idx) => {
+        cta.dataset.layoutKey = `cover:cta:${idx}`;
+      });
+      return;
+    }
+
+    const head = pageEl.querySelector<HTMLElement>('.mag-ref-left-stage > .mag-zine-head, .mag-glossary-sheet > .mag-zine-head');
+    if (head) {
+      head.dataset.layoutKey = `${pageKey}:head`;
+    }
+
+    const copyNodes = Array.from(
+      pageEl.querySelectorAll<HTMLElement>(
+        ':is(.mag-ref-left-stage, .mag-glossary-sheet) > p.mag-zine-copy, :is(.mag-ref-left-stage, .mag-glossary-sheet) > p.section-subtitle',
+      ),
+    );
+    copyNodes.forEach((p, idx) => {
+      const key = `${pageKey}:copy:${idx}`;
+      p.dataset.layoutKey = key;
+      p.dataset.textKey = key;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('[data-page-photos] > .mag-photo-figure').forEach((fig, idx) => {
+      fig.dataset.layoutKey = `${pageKey}:photo:${idx}`;
+    });
+
+    const noteCutoutHost =
+      pageEl.querySelector<HTMLElement>('.mag-note-cutout-host') ??
+      pageEl.querySelector<HTMLElement>('[data-page-note-cutout]');
+    if (noteCutoutHost) {
+      noteCutoutHost.dataset.layoutKey = `note:${pageKey}:sticker`;
+    }
+
+    const noteCopy = pageEl.querySelector<HTMLElement>('.mag-note-box > p.mag-zine-copy');
+    if (noteCopy) {
+      const key = `note:${pageKey}:copy`;
+      noteCopy.dataset.layoutKey = key;
+      noteCopy.dataset.textKey = key;
+    }
+
+    pageEl.querySelectorAll<HTMLElement>('.mag-ref-mini-trio > :is(.mag-trio-slot, img)').forEach((item, idx) => {
+      item.dataset.layoutKey = `trio:${pageKey}:${idx}`;
+    });
+
+    const quote = pageEl.querySelector<HTMLElement>('.quote-block');
+    if (quote) quote.dataset.layoutKey = `${pageKey}:quote`;
+
+    pageEl.querySelectorAll<HTMLElement>('#metrics-list > li').forEach((li, idx) => {
+      li.dataset.layoutKey = `metric:${idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('.work-grid > .case-card').forEach((card, idx) => {
+      card.dataset.layoutKey = `case:${card.dataset.caseId || idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('.events-grid > .event-card').forEach((card, idx) => {
+      card.dataset.layoutKey = `event:${card.dataset.campaignId || idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('.services-grid > .service-card').forEach((card, idx) => {
+      card.dataset.layoutKey = `service:${pageKey}:${idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('#process-grid > .process-card').forEach((card, idx) => {
+      card.dataset.layoutKey = `step:${idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('.faq-list > .faq-item').forEach((item, idx) => {
+      item.dataset.layoutKey = `faq:${pageKey}:${idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('[data-page-texts] > *').forEach((block, idx) => {
+      block.dataset.layoutKey = `${pageKey}:extra:${idx}`;
+    });
+
+    pageEl.querySelectorAll<HTMLElement>('.custom-elements-grid > *').forEach((el, idx) => {
+      el.dataset.layoutKey = `${pageKey}:el:${idx}`;
+    });
+  });
+}
+
+export function applyTextOverrides(
+  root: ParentNode,
+  overrides?: Record<string, TextOverride>,
+): void {
+  assignEditableLayoutKeys(root);
+  if (!overrides) return;
+
+  root.querySelectorAll<HTMLElement>('[data-text-key]:not(button):not([data-action])').forEach((el) => {
+    const key = el.dataset.textKey;
+    if (!key) return;
+    const entry = overrides[key];
+    if (!entry) return;
+
+    if (entry.hidden) {
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+
+    if (el.classList.contains('mag-coverline-link')) {
+      const strong = el.querySelector('strong');
+      const span = el.querySelector('span');
+      if (strong && entry.title !== undefined) strong.textContent = entry.title;
+      if (span && entry.text !== undefined) span.textContent = entry.text;
+      if (entry.href !== undefined) el.setAttribute('href', safeHref(entry.href, '#work'));
+      return;
+    }
+
+    if (entry.text !== undefined) {
+      const existingControls = el.querySelector(':scope > .admin-el-controls');
+      el.textContent = entry.text;
+      if (existingControls) el.append(existingControls);
+    }
+  });
+}
+
+export function applyElementLayouts(
+  root: ParentNode,
+  layouts?: Record<string, ElementLayout>,
+): void {
+  assignEditableLayoutKeys(root);
+  root.querySelectorAll<HTMLElement>('[data-layout-key]').forEach((el) => {
+    const key = el.dataset.layoutKey;
+    const entry = key && layouts ? layouts[key] : undefined;
+    if (!entry) {
+      el.style.removeProperty('--el-tx');
+      el.style.removeProperty('--el-ty');
+      el.style.removeProperty('--el-scale');
+      el.classList.remove('has-el-layout');
+      return;
+    }
+    el.style.setProperty('--el-tx', `${Math.round(entry.x || 0)}px`);
+    el.style.setProperty('--el-ty', `${Math.round(entry.y || 0)}px`);
+    el.style.setProperty('--el-scale', String(Number((entry.scale || 1).toFixed(3))));
+    el.classList.add('has-el-layout');
+  });
 }

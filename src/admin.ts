@@ -1,5 +1,6 @@
 import { DEFAULT_CMS_STATE } from '../api/_lib/defaultState';
 import { mountAdminMagazineClone, type AdminCloneHandle } from './scripts/adminMagazineClone';
+import { DEFAULT_TRIO_PHOTOS } from './scripts/cmsView';
 import { compressImageUpload, formatByteSize } from './scripts/imageCompression';
 import { initInstallPrompt, registerAppServiceWorker } from './scripts/install';
 import type {
@@ -12,6 +13,7 @@ import type {
   ClientStatus,
   CustomElement,
   CustomSection,
+  ElementLayout,
   FaqItem,
   HeroButton,
   MagazinePhoto,
@@ -24,6 +26,7 @@ import type {
   SiteContent,
   SubmissionRecord,
   SubmissionStatus,
+  TextOverride,
 } from './types/cms';
 
 interface AdminCmsState {
@@ -40,6 +43,8 @@ interface AdminCmsState {
   hiddenSections: BuiltinSectionKey[];
   pagePhotos: Record<string, MagazinePhoto[]>;
   pageTextBlocks: Record<string, PageTextBlock[]>;
+  textOverrides: Record<string, TextOverride>;
+  elementLayouts: Record<string, ElementLayout>;
   clients: ClientRecord[];
   submissions: SubmissionRecord[];
 }
@@ -58,6 +63,8 @@ const state: AdminCmsState = {
   hiddenSections: [],
   pagePhotos: structuredClone(DEFAULT_CMS_STATE.pagePhotos),
   pageTextBlocks: structuredClone(DEFAULT_CMS_STATE.pageTextBlocks),
+  textOverrides: {},
+  elementLayouts: {},
   clients: [],
   submissions: [],
 };
@@ -442,6 +449,21 @@ function getEffectivePagePhotos(pageKey: string, customIdx = 0): MagazinePhoto[]
   if (Object.prototype.hasOwnProperty.call(state.pagePhotos, pageKey)) {
     return state.pagePhotos[pageKey] ?? [];
   }
+  if (pageKey.startsWith('trio-')) {
+    const baseKey = pageKey.slice(5);
+    const list =
+      DEFAULT_TRIO_PHOTOS[baseKey] ??
+      [
+        EDITORIAL_SHOOT_PHOTOS[customIdx % EDITORIAL_SHOOT_PHOTOS.length],
+        EDITORIAL_SHOOT_PHOTOS[(customIdx + 1) % EDITORIAL_SHOOT_PHOTOS.length],
+        EDITORIAL_SHOOT_PHOTOS[(customIdx + 2) % EDITORIAL_SHOOT_PHOTOS.length],
+      ];
+    return list.map((src, i) => ({
+      id: `default-${pageKey}-${i}`,
+      src,
+      caption: `Editorial Strip Photo ${i + 1}`,
+    }));
+  }
   if (pageKey.startsWith('note-')) {
     const baseKey = pageKey.slice(5);
     const noteSrc = DEFAULT_NOTE_CUTOUTS[baseKey];
@@ -513,6 +535,15 @@ function renderVisualEditor(preferredPageId?: string): void {
       void handleVisualEditorClick(el);
     },
     preservedPageId,
+    async (layoutKey, layout) => {
+      const nextLayouts = { ...state.elementLayouts };
+      if (layout === null) {
+        delete nextLayouts[layoutKey];
+      } else {
+        nextLayouts[layoutKey] = layout;
+      }
+      await persistCmsPatch({ elementLayouts: nextLayouts }, 'Element position & size saved.');
+    },
   );
 }
 
@@ -649,6 +680,109 @@ async function handleVisualEditorClick(target: HTMLElement): Promise<void> {
     return;
   }
 
+  if (action === 'edit-hero-logo') {
+    const existingSrc = state.siteContent.heroLogoSrc || '/mc-logo.svg';
+    openPhotoEditorDialog(
+      'Replace Cover Logo Artwork',
+      { id: 'hero-logo', src: existingSrc, caption: 'Main Character Media Cover Logo' },
+      async ({ src }) => {
+        await persistCmsPatch(
+          {
+            siteContent: {
+              ...state.siteContent,
+              heroLogoSrc: src,
+            },
+          },
+          'Cover logo artwork updated.',
+        );
+      },
+      false,
+    );
+    return;
+  }
+
+  if (action === 'reset-hero-logo') {
+    await persistCmsPatch(
+      {
+        siteContent: {
+          ...state.siteContent,
+          heroLogoSrc: '/mc-logo.svg',
+        },
+      },
+      'Cover logo reset to default.',
+    );
+    return;
+  }
+
+  if (action === 'edit-text-override') {
+    const textKey = btn.dataset.targetTextKey || btn.dataset.textKey || '';
+    if (!textKey) return;
+    const hostEl = btn.closest<HTMLElement>('[data-text-key]');
+    const isCoverline = Boolean(hostEl?.classList.contains('mag-coverline-link'));
+    const existing = state.textOverrides[textKey];
+
+    if (isCoverline) {
+      const curTitle = existing?.title ?? hostEl?.querySelector('strong')?.textContent?.trim() ?? '';
+      const curText = existing?.text ?? hostEl?.querySelector('span')?.textContent?.trim() ?? '';
+      const curHref = existing?.href ?? hostEl?.getAttribute('href') ?? '#work';
+      openEditorDialog(
+        'Edit Coverline Link',
+        [
+          { name: 'title', label: 'Kicker Label', type: 'text', value: curTitle, required: true },
+          { name: 'text', label: 'Subline Copy', type: 'text', value: curText, required: true },
+          { name: 'href', label: 'Target (#section or URL)', type: 'text', value: curHref, required: true },
+        ],
+        async (fd) => {
+          const nextOverrides = {
+            ...state.textOverrides,
+            [textKey]: {
+              title: String(fd.get('title') || '').trim(),
+              text: String(fd.get('text') || '').trim(),
+              href: String(fd.get('href') || '#work').trim(),
+              hidden: false,
+            },
+          };
+          await persistCmsPatch({ textOverrides: nextOverrides }, 'Coverline updated.');
+        },
+      );
+      return;
+    }
+
+    const domClone = hostEl?.cloneNode(true) as HTMLElement | undefined;
+    domClone?.querySelectorAll('.admin-el-controls, .admin-resize-corner').forEach((n) => n.remove());
+    const curText = existing?.text ?? domClone?.textContent?.trim() ?? '';
+    openEditorDialog(
+      'Edit Magazine Copy',
+      [{ name: 'text', label: 'Editorial Copy', type: 'textarea', value: curText, required: true }],
+      async (fd) => {
+        const nextOverrides = {
+          ...state.textOverrides,
+          [textKey]: {
+            ...existing,
+            text: String(fd.get('text') || '').trim(),
+            hidden: false,
+          },
+        };
+        await persistCmsPatch({ textOverrides: nextOverrides }, 'Copy updated.');
+      },
+    );
+    return;
+  }
+
+  if (action === 'delete-text-override') {
+    const textKey = btn.dataset.targetTextKey || btn.dataset.textKey || '';
+    if (!textKey) return;
+    const nextOverrides = {
+      ...state.textOverrides,
+      [textKey]: {
+        ...(state.textOverrides[textKey] ?? {}),
+        hidden: true,
+      },
+    };
+    await persistCmsPatch({ textOverrides: nextOverrides }, 'Text block removed from page.');
+    return;
+  }
+
   if (action === 'edit-hero') {
     openEditorDialog(
       'Edit Hero Copy',
@@ -769,6 +903,38 @@ async function handleVisualEditorClick(target: HTMLElement): Promise<void> {
     await persistCmsPatch(
       { tickerItems: state.tickerItems.filter((_, i) => i !== idx) },
       'Ticker item deleted.',
+    );
+    return;
+  }
+
+  if (action === 'edit-metrics-header' || action === 'edit-directory-header') {
+    const isMetrics = action === 'edit-metrics-header';
+    const curEyebrow = isMetrics
+      ? state.siteContent.metricsEyebrow ?? 'By The Numbers'
+      : state.siteContent.directoryEyebrow ?? 'Studios & Press';
+    const curHeading = isMetrics
+      ? state.siteContent.metricsHeading ?? 'Attention measured in cultural gravity.'
+      : state.siteContent.directoryHeading ?? 'Global studio desks.';
+    openEditorDialog(
+      isMetrics ? 'Edit Pulse & Numbers Header' : 'Edit Directory Header',
+      [
+        { name: 'eyebrow', label: 'Eyebrow Badge', type: 'text', value: curEyebrow, required: true },
+        { name: 'heading', label: 'Section Heading', type: 'text', value: curHeading, required: true },
+      ],
+      async (fd) => {
+        const patch: SiteContent = isMetrics
+          ? {
+              ...state.siteContent,
+              metricsEyebrow: String(fd.get('eyebrow') || '').trim(),
+              metricsHeading: String(fd.get('heading') || '').trim(),
+            }
+          : {
+              ...state.siteContent,
+              directoryEyebrow: String(fd.get('eyebrow') || '').trim(),
+              directoryHeading: String(fd.get('heading') || '').trim(),
+            };
+        await persistCmsPatch({ siteContent: patch }, 'Section header published.');
+      },
     );
     return;
   }
@@ -1427,6 +1593,8 @@ async function loadWorkspaceData(): Promise<void> {
     hiddenSections: cms.hiddenSections ?? state.hiddenSections,
     pagePhotos: cms.pagePhotos ?? state.pagePhotos,
     pageTextBlocks: cms.pageTextBlocks ?? state.pageTextBlocks,
+    textOverrides: cms.textOverrides ?? state.textOverrides,
+    elementLayouts: cms.elementLayouts ?? state.elementLayouts,
     clients: clientsRes.clients,
     submissions: subsRes.submissions,
   });
