@@ -1310,6 +1310,7 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
       ? window.matchMedia(DOUBLE_SPREAD_QUERY)
       : null;
   let pendingReflowAfterTurn = false;
+  let pendingImageReflowRaf = 0;
 
   const handleViewportChange = () => {
     if (book.classList.contains('is-curling')) {
@@ -1341,13 +1342,28 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     if (isRepaginating) return;
     const target = e.target;
     if (!(target instanceof HTMLImageElement)) return;
-    // Built-in cutout stickers already carry intrinsic width/height and never change layout after load
-    if (target.hasAttribute('width') && target.hasAttribute('height')) return;
+    // Built-in cutout stickers, mini-trio thumbnails (3:4), and cover photos have locked geometry
+    if (
+      (target.hasAttribute('width') && target.hasAttribute('height')) ||
+      target.closest('.mag-ref-mini-trio, .mag-cover-backdrop')
+    ) {
+      return;
+    }
     const hostPage = target.closest<HTMLElement>('[data-mag-page]');
     // Never yank content or adjust height while the user is viewing an inner page
     if (currentIndex > 0 && hostPage && !hostPage.hidden) return;
     if (book.classList.contains('is-curling') || activeSkipToken !== 0 || pendingSettleFinish !== null) {
       pendingReflowAfterTurn = true;
+      return;
+    }
+    if (typeof requestAnimationFrame === 'function') {
+      if (pendingImageReflowRaf) return;
+      pendingImageReflowRaf = requestAnimationFrame(() => {
+        pendingImageReflowRaf = 0;
+        if (!isRepaginating && !book.classList.contains('is-curling')) {
+          reflowMagazinePages(true);
+        }
+      });
       return;
     }
     reflowMagazinePages(true);
@@ -1410,6 +1426,15 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
   document.addEventListener('keydown', handleKeyDown);
 
   refresh();
+  let turnReadyRafId = 0;
+  if (typeof requestAnimationFrame === 'function') {
+    turnReadyRafId = requestAnimationFrame(() => {
+      turnReadyRafId = 0;
+      book.classList.add('is-turn-ready');
+    });
+  } else {
+    book.classList.add('is-turn-ready');
+  }
 
   return {
     getPages: collectPages,
@@ -1422,6 +1447,15 @@ export function initMagazineBook(root: ParentNode = document): MagazineBookContr
     refresh,
     destroy: () => {
       cancelSkipCascade();
+      if (turnReadyRafId && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(turnReadyRafId);
+        turnReadyRafId = 0;
+      }
+      if (pendingImageReflowRaf && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(pendingImageReflowRaf);
+        pendingImageReflowRaf = 0;
+      }
+      book.classList.remove('is-turn-ready');
       clearTimeout(flipTimer);
       clearTimeout(suppressClickTimer);
       clearCurlVisuals();

@@ -666,9 +666,13 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     expect(coverHeightCalls).toBe(initialMeasureCount);
     expect(book.style.getPropertyValue('--mag-page-h')).toBe('600px');
 
-    // Passive image load event on active visible Page 5 must NOT trigger reflow
+    // Passive image load event on active visible Page 5 or fixed-ratio mini-trio/cover images must NOT trigger reflow
     const img = document.querySelector<HTMLImageElement>('#work-2 .mag-photo-img')!;
     img.dispatchEvent(new Event('load', { bubbles: false }));
+    const trioImg = document.querySelector<HTMLImageElement>('#work-2 .mag-ref-mini-trio img')!;
+    trioImg.dispatchEvent(new Event('load', { bubbles: false }));
+    const coverImg = document.querySelector<HTMLImageElement>('#cover .mag-cover-backdrop img')!;
+    coverImg.dispatchEvent(new Event('load', { bubbles: false }));
     expect(coverHeightCalls).toBe(initialMeasureCount);
     expect(ctrl.getCurrentIndex()).toBe(5);
 

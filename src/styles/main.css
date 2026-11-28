@@ -300,13 +300,18 @@ body {
     max-width: min(98vw, 82rem);
     background: transparent;
     box-shadow: none;
-    overflow: visible;
+    overflow: hidden;
     perspective: 2400px;
     transform-style: preserve-3d;
+    transition: none;
+  }
+
+  #mag-book.is-double-spread.is-turn-ready {
     transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   #mag-book.is-double-spread.is-curling {
+    overflow: visible;
     transition: none;
   }
 
@@ -2000,10 +2005,12 @@ dialog.case-dialog::backdrop {
 .mag-book.is-paginating > .mag-page[data-mag-measuring='true'],
 .mag-book.is-paginating #custom-sections-root > .mag-page[data-mag-measuring='true'] {
   position: absolute !important;
-  inset-block-start: 0 !important;
-  inset-inline-start: 0 !important;
+  inset-block-start: -9999px !important;
+  inset-inline-start: -9999px !important;
   width: 100%;
+  opacity: 0 !important;
   visibility: hidden !important;
+  clip-path: inset(100%) !important;
   pointer-events: none !important;
   z-index: -1 !important;
 }
