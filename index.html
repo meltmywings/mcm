@@ -33,7 +33,21 @@
     </div>
   </header>
 
-  <main id="top" class="mag-stage">
+  <main id="top" class="mag-stage is-mag-loading">
+    <div id="mag-loading-screen" class="mag-loading-screen" aria-busy="true">
+      <div class="mag-loading-card">
+        <div class="mag-loading-folio" aria-hidden="true">
+          <span class="mag-loading-sheet is-back"></span>
+          <span class="mag-loading-sheet is-flip"></span>
+          <img src="/mc-logo.svg" alt="" class="mag-loading-logo" />
+        </div>
+        <p class="mag-loading-kicker">ISSUE NO. 01 · AUTUMN / WINTER</p>
+        <p class="mag-loading-brand">MAIN CHARACTER MEDIA</p>
+        <progress aria-label="Setting spreads and cover edition" class="loading-spinner"></progress>
+        <p class="mag-loading-status">Setting spreads &amp; cover height…</p>
+      </div>
+    </div>
+
     <div id="mag-book" class="mag-book">
       <!-- Google Books-style diagonal curling page corner flap -->
       <div class="mag-curl-flap-host" aria-hidden="true">

@@ -168,6 +168,47 @@ async function hydrateFromCms(
   }
 }
 
+function dismissLoadingScreen(root: ParentNode): void {
+  const stage = root.querySelector<HTMLElement>('.mag-stage');
+  const loader = root.querySelector<HTMLElement>('#mag-loading-screen');
+  stage?.classList.remove('is-mag-loading');
+  if (!loader || loader.hidden) return;
+
+  loader.setAttribute('aria-busy', 'false');
+  loader.classList.add('is-leaving');
+
+  const animations = typeof loader.getAnimations === 'function' ? loader.getAnimations() : [];
+  if (animations.length === 0) {
+    loader.hidden = true;
+    return;
+  }
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    loader.hidden = true;
+  };
+  loader.addEventListener('transitionend', finish, { once: true });
+  setTimeout(finish, 340);
+}
+
+async function waitForInitialSpreadStability(root: ParentNode): Promise<void> {
+  const coverImgs = Array.from(root.querySelectorAll<HTMLImageElement>('#cover img')).map((img) => {
+    img.loading = 'eager';
+    return img.decode?.().catch(() => {}) ?? Promise.resolve();
+  });
+  const fontsReady =
+    typeof document !== 'undefined' && document.fonts?.ready
+      ? document.fonts.ready.catch(() => {})
+      : Promise.resolve();
+
+  await Promise.race([
+    Promise.allSettled([fontsReady, ...coverImgs]),
+    new Promise<void>((resolve) => setTimeout(resolve, 450)),
+  ]);
+}
+
 export async function bootstrapApp(root: ParentNode = document): Promise<void> {
   await ensurePopoverPolyfill();
 
@@ -198,9 +239,22 @@ export async function bootstrapApp(root: ParentNode = document): Promise<void> {
     yearEl.textContent = String(new Date().getFullYear());
   }
 
-  void hydrateFromCms(root, workController, bookController);
+  await Promise.race([
+    hydrateFromCms(root, workController, bookController),
+    new Promise<void>((resolve) => setTimeout(resolve, 1800)),
+  ]);
+  await waitForInitialSpreadStability(root);
+  bookController?.refresh();
+
+  if (typeof requestAnimationFrame === 'function') {
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+  }
+  dismissLoadingScreen(root);
 }
 
-if (typeof document !== 'undefined') {
+const isVitest = typeof process !== 'undefined' && Boolean(process.env?.VITEST);
+if (typeof document !== 'undefined' && !isVitest) {
   void bootstrapApp(document);
 }

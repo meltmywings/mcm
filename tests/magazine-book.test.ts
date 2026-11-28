@@ -6,6 +6,7 @@ import {
   renderPagePhotos,
   renderPageTextBlocks,
 } from '../src/scripts/cmsView';
+import { bootstrapApp } from '../src/main';
 import { initMagazineBook } from '../src/scripts/magazineBook';
 
 function loadIndexDom(): void {
@@ -723,5 +724,48 @@ describe('Online Magazine Book, Page Flipping, Logo Cover Return & Glossary', ()
     expect(extraTexts.textContent).toContain('Editor Note');
     expect(extraTexts.textContent).toContain('New quarterly circulation numbers.');
     expect(extraTexts.querySelector('.quote-text')?.textContent).toBe('Culture moves at the speed of taste.');
+  });
+
+  it('keeps inner custom pages hidden until pagination and dismisses the loading screen once spreads settle', async () => {
+    loadIndexDom();
+    const stage = document.querySelector<HTMLElement>('.mag-stage')!;
+    const loader = document.getElementById('mag-loading-screen')!;
+    const progress = loader.querySelector<HTMLProgressElement>('progress.loading-spinner')!;
+
+    expect(stage.classList.contains('is-mag-loading')).toBe(true);
+    expect(loader.getAttribute('aria-busy')).toBe('true');
+    expect(loader.hidden).toBe(false);
+    expect(progress.hasAttribute('value')).toBe(false);
+
+    // Custom sections must be created hidden so wide-screen CSS Grid cannot flash them beside Cover during CMS fetch
+    renderCustomSections(document.getElementById('custom-sections-root'), [
+      {
+        id: 'cms-test-feature',
+        eyebrow: 'Drop',
+        heading: 'Late CMS Feature',
+        subtitle: 'Loaded during hydration.',
+        elements: [],
+      },
+    ]);
+    expect(document.getElementById('custom-cms-test-feature')?.hidden).toBe(true);
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({}),
+      }),
+    );
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 1;
+    });
+
+    await bootstrapApp(document);
+
+    expect(stage.classList.contains('is-mag-loading')).toBe(false);
+    expect(loader.getAttribute('aria-busy')).toBe('false');
+    expect(loader.hidden).toBe(true);
+    expect(document.getElementById('cover')?.hidden).toBe(false);
   });
 });

@@ -11,7 +11,12 @@ export interface NavbarController {
 }
 
 export async function ensurePopoverPolyfill(): Promise<void> {
-  if (typeof HTMLElement !== 'undefined' && !Object.hasOwn(HTMLElement.prototype, 'popover')) {
+  if (
+    typeof HTMLElement !== 'undefined' &&
+    typeof CSS !== 'undefined' &&
+    typeof CSS.escape === 'function' &&
+    !Object.hasOwn(HTMLElement.prototype, 'popover')
+  ) {
     await import('@oddbird/popover-polyfill');
   }
 }

@@ -447,6 +447,7 @@ export function renderCustomSections(
           ];
 
       const secEl = document.createElement('article');
+      secEl.hidden = true;
       secEl.className =
         resolvedPhotos.length === 0
           ? 'mag-page mag-spread is-zine-page no-photos'
